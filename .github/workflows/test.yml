@@ -10,6 +10,8 @@ jobs:
   test:
     name: Test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
     strategy:
       fail-fast: false
       matrix:
@@ -18,5 +20,7 @@ jobs:
     - uses: actions/checkout@v2
     - run: npm install
     - run: npm run all
+    - name: Create sbt build
+      run: mkdir project
     - name: Run sbt-dependency-graph-action
       uses: ./
