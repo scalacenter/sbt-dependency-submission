@@ -1,0 +1,9 @@
+name: 'sbt-dependency-graph-action'
+description: 'Submit the dependency graph of an sbt build to the Github Dependency API'
+author: 'The Scala Center'
+branding:
+  icon: 'package'
+  color: '#1a84ac'
+runs:
+  using: 'node12'
+  main: 'dist/index.js'
