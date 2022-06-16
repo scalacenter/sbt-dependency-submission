@@ -1,0 +1,43 @@
+{
+  "name": "sbt-dependency-graph-action",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Submit the dependency graph of an sbt build to Github",
+  "main": "lib/main.js",
+  "scripts": {
+    "build": "tsc",
+    "format": "prettier --write **/*.ts",
+    "format-check": "prettier --check **/*.ts",
+    "lint": "eslint src/**/*.ts",
+    "package": "ncc build --source-map --license licenses.txt",
+    "all": "npm run build && npm run format && npm run lint && npm run package"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/scalacenter/sbt-dependency-graph-action.git"
+  },
+  "keywords": [
+    "actions",
+    "scala",
+    "sbt",
+    "dependency",
+    "graph"
+  ],
+  "author": "The Scala Center",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@actions/core": "^1.6.0",
+    "@actions/exec": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.30",
+    "@typescript-eslint/eslint-plugin": "^4.33.0",
+    "@typescript-eslint/parser": "^4.33.0",
+    "@vercel/ncc": "^0.33.3",
+    "eslint": "^7.32.0",
+    "eslint-plugin-github": "^4.3.2",
+    "js-yaml": "^4.1.0",
+    "prettier": "2.5.1",
+    "typescript": "^4.5.5"
+  }
+}
