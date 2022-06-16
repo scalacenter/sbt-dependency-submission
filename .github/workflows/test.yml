@@ -1,3 +1,4 @@
+name: Test Action
 on:
   push:
     branches:
@@ -8,7 +9,7 @@ on:
 
 jobs:
   test:
-    name: Test on ${{ matrix.os }}
+    name: On ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     env:
       GITHUB_TOKEN: ${{ github.token }}
