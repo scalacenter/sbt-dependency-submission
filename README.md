@@ -30,5 +30,5 @@ jobs:
       GITHUB_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v3
-      - uses: scalacenter/sbt-dependency-graph-action@v1
+      - uses: scalacenter/sbt-dependency-graph-action@v0.1.0-M1
 ```
