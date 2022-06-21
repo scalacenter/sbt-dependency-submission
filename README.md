@@ -26,6 +26,8 @@ jobs:
     runs-on: ubuntu-latest # or windows-latest, or macOS-latest
     env:
       GITHUB_TOKEN: ${{ github.token }}
+    permissions:
+      contents: write # this permission is needed to submit the dependency graph
     steps:
       - uses: actions/checkout@v3
       - uses: scalacenter/sbt-dependency-graph-action@v0.1.0-M1
