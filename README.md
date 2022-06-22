@@ -32,3 +32,36 @@ jobs:
       - uses: actions/checkout@v3
       - uses: scalacenter/sbt-dependency-graph-action@v0.1.0-M1
 ```
+
+### Inputs
+
+#### `projects` (optional)
+
+A list of space-separated names of projects from your build.
+The action will publish the graph of these projects only.
+
+Example: `foo bar`
+
+Default is '' and it means all projects.
+
+#### `scala-versions` (optional)
+
+A list of space-separated versions of Scala, that are declared in your build.
+The action will publish the graph on these Scala versions only.
+
+Example: `2.13.8 3.1.3`
+
+Default is '' and it means all scala versions.
+
+#### Example
+
+In this example the snapshot will contain the graphs of `foo_2.13`, `foo_3`, `bar_2.13` and `bar_3`.
+
+```yaml
+steps:
+  - uses: actions/checkout@v3
+  - uses: scalacenter/sbt-dependency-graph-action@v0.1.0-M1
+    with:
+      projects: foo bar
+      scala-versions: 2.13.8 3.1.3
+```
