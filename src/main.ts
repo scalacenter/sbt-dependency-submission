@@ -6,8 +6,8 @@ import * as fsPromises from 'fs/promises'
 import * as os from 'os'
 import * as path from 'path'
 
-// Version of the sbt-dependency-graph-plugin
-const pluginVersion = '0.1.0-M5'
+// Version of the sbt-github-dependency-graph-plugin
+const pluginVersion = '0.1.0-M6'
 const baseDir = '.'
 
 async function commandExists(cmd: string): Promise<boolean> {
@@ -34,7 +34,13 @@ async function run(): Promise<void> {
       core.setFailed('Not found sbt command')
       return
     }
-    await cli.exec('sbt', ['submitGithubDependencyGraph'])
+
+    const input = {
+      projects: core.getInput('projects').split(' ').filter((value) => value.length > 0),
+      scalaVersions: core.getInput('scala-versions').split(' ').filter((value) => value.length > 0),
+    }
+
+    await cli.exec('sbt', [`githubSubmitDependencyGraph ${JSON.stringify(input)}`])
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(error)
