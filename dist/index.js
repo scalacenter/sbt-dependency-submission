@@ -46,8 +46,8 @@ const fs = __importStar(__nccwpck_require__(147));
 const fsPromises = __importStar(__nccwpck_require__(292));
 const os = __importStar(__nccwpck_require__(37));
 const path = __importStar(__nccwpck_require__(17));
-// Version of the sbt-dependency-graph-plugin
-const pluginVersion = '0.1.0-M5';
+// Version of the sbt-github-dependency-graph-plugin
+const pluginVersion = '0.1.0-M6';
 const baseDir = '.';
 function commandExists(cmd) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -75,7 +75,11 @@ function run() {
                 core.setFailed('Not found sbt command');
                 return;
             }
-            yield cli.exec('sbt', ['submitGithubDependencyGraph']);
+            const input = {
+                projects: core.getInput('projects').split(' ').filter((value) => value.length > 0),
+                scalaVersions: core.getInput('scala-versions').split(' ').filter((value) => value.length > 0),
+            };
+            yield cli.exec('sbt', [`githubSubmitDependencyGraph ${JSON.stringify(input)}`]);
         }
         catch (error) {
             if (error instanceof Error) {
