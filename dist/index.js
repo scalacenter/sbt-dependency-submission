@@ -76,8 +76,14 @@ function run() {
                 return;
             }
             const input = {
-                projects: core.getInput('projects').split(' ').filter((value) => value.length > 0),
-                scalaVersions: core.getInput('scala-versions').split(' ').filter((value) => value.length > 0),
+                projects: core
+                    .getInput('projects')
+                    .split(' ')
+                    .filter(value => value.length > 0),
+                scalaVersions: core
+                    .getInput('scala-versions')
+                    .split(' ')
+                    .filter(value => value.length > 0),
             };
             yield cli.exec('sbt', [`githubSubmitDependencyGraph ${JSON.stringify(input)}`]);
         }
