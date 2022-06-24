@@ -47,7 +47,7 @@ The action will publish the graph of these projects only.
 
 Example: `foo bar`
 
-Default is '' and it means all projects.
+Default is empty string and it means all projects.
 
 #### `scala-versions` (optional)
 
@@ -56,7 +56,7 @@ The action will publish the graph on these Scala versions only.
 
 Example: `2.13.8 3.1.3`
 
-Default is '' and it means all scala versions.
+Default is empty string and it means all scala versions.
 
 #### Example
 
