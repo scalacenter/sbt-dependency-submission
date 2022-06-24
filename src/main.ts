@@ -8,7 +8,6 @@ import * as path from 'path'
 
 // Version of the sbt-github-dependency-graph-plugin
 const pluginVersion = '0.1.0-M6'
-const baseDir = '.'
 
 async function commandExists(cmd: string): Promise<boolean> {
   const isWin = os.platform() === 'win32'
@@ -19,12 +18,13 @@ async function commandExists(cmd: string): Promise<boolean> {
 
 async function run(): Promise<void> {
   try {
+    const baseDirInput = core.getInput('base-dir')
+    const baseDir = baseDirInput.length === 0 ? '.' : baseDirInput
     const projectDir = path.join(baseDir, 'project')
     const uuid = crypto.randomUUID()
     const pluginFile = path.join(projectDir, `github-dependency-graph-${uuid}.sbt`)
     const pluginDep = `addSbtPlugin("ch.epfl.scala" % "sbt-github-dependency-graph" % "${pluginVersion}")`
-    const isProject = fs.existsSync(projectDir)
-    if (!isProject) {
+    if (!fs.existsSync(projectDir)) {
       core.setFailed(`${baseDir} is not a valid sbt project: missing folder '${projectDir}'.`)
       return
     }

@@ -35,6 +35,11 @@ jobs:
 
 ### Inputs
 
+### `base-dir` (optional)
+
+The  relative path of the base directory of your sbt build.
+Default value is `.`
+
 #### `projects` (optional)
 
 A list of space-separated names of projects from your build.
@@ -42,7 +47,7 @@ The action will publish the graph of these projects only.
 
 Example: `foo bar`
 
-Default is '' and it means all projects.
+Default is empty string and it means all projects.
 
 #### `scala-versions` (optional)
 
@@ -51,7 +56,7 @@ The action will publish the graph on these Scala versions only.
 
 Example: `2.13.8 3.1.3`
 
-Default is '' and it means all scala versions.
+Default is empty string and it means all scala versions.
 
 #### Example
 
@@ -62,6 +67,7 @@ steps:
   - uses: actions/checkout@v3
   - uses: scalacenter/sbt-dependency-graph-action@v0.1.0-M1
     with:
+      base-dir: ./my-scala-project
       projects: foo bar
       scala-versions: 2.13.8 3.1.3
 ```
