@@ -35,6 +35,11 @@ jobs:
 
 ### Inputs
 
+### `base-dir` (optional)
+
+The  relative path of the base directory of your sbt build.
+Default value is `.`
+
 #### `projects` (optional)
 
 A list of space-separated names of projects from your build.
@@ -62,6 +67,7 @@ steps:
   - uses: actions/checkout@v3
   - uses: scalacenter/sbt-dependency-graph-action@v0.1.0-M1
     with:
+      base-dir: ./my-scala-project
       projects: foo bar
       scala-versions: 2.13.8 3.1.3
 ```
