@@ -48,7 +48,6 @@ const os = __importStar(__nccwpck_require__(37));
 const path = __importStar(__nccwpck_require__(17));
 // Version of the sbt-github-dependency-graph-plugin
 const pluginVersion = '0.1.0-M6';
-const baseDir = '.';
 function commandExists(cmd) {
     return __awaiter(this, void 0, void 0, function* () {
         const isWin = os.platform() === 'win32';
@@ -60,12 +59,13 @@ function commandExists(cmd) {
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            const baseDirInput = core.getInput('base-dir');
+            const baseDir = baseDirInput.length === 0 ? '.' : baseDirInput;
             const projectDir = path.join(baseDir, 'project');
             const uuid = crypto.randomUUID();
             const pluginFile = path.join(projectDir, `github-dependency-graph-${uuid}.sbt`);
             const pluginDep = `addSbtPlugin("ch.epfl.scala" % "sbt-github-dependency-graph" % "${pluginVersion}")`;
-            const isProject = fs.existsSync(projectDir);
-            if (!isProject) {
+            if (!fs.existsSync(projectDir)) {
                 core.setFailed(`${baseDir} is not a valid sbt project: missing folder '${projectDir}'.`);
                 return;
             }
