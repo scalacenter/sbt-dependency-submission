@@ -35,7 +35,7 @@ jobs:
 
 ### Inputs
 
-### `base-dir` (optional)
+#### `base-dir` (optional)
 
 The  relative path of the base directory of your sbt build.
 Default value is `.`
