@@ -35,12 +35,12 @@ jobs:
 
 ### Inputs
 
-#### `base-dir` (optional)
+#### - `base-dir` (optional)
 
 The  relative path of the base directory of your sbt build.
 Default value is `.`
 
-#### `projects` (optional)
+#### - `projects` (optional)
 
 A list of space-separated names of projects from your build.
 The action will publish the graph of these projects only.
@@ -49,7 +49,7 @@ Example: `foo bar`
 
 Default is empty string and it means all projects.
 
-#### `scala-versions` (optional)
+#### - `scala-versions` (optional)
 
 A list of space-separated versions of Scala, that are declared in your build.
 The action will publish the graph on these Scala versions only.
