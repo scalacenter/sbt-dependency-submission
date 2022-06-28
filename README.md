@@ -30,7 +30,7 @@ jobs:
       contents: write # this permission is needed to submit the dependency graph
     steps:
       - uses: actions/checkout@v3
-      - uses: scalacenter/sbt-dependency-graph-action@v0.1.0-M1
+      - uses: scalacenter/sbt-dependency-graph-action@v0.1.0-M2
 ```
 
 ### Inputs
