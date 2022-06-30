@@ -7,7 +7,7 @@ import * as os from 'os'
 import * as path from 'path'
 
 // Version of the sbt-github-dependency-graph-plugin
-const pluginVersion = '0.1.0-M6'
+const pluginVersion = '1.0.0-RC1'
 
 async function commandExists(cmd: string): Promise<boolean> {
   const isWin = os.platform() === 'win32'

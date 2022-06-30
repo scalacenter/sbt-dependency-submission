@@ -19,7 +19,8 @@ Create a Github Action file under `.github/workflows` containing the following d
 name: Submit Dependency Graph
 on:
   push:
-    branches: main # default branch of the project
+    branches:
+      - main # default branch of the project
 jobs:
   submit-graph:
     name: Submit Dependency Graph
@@ -30,7 +31,7 @@ jobs:
       contents: write # this permission is needed to submit the dependency graph
     steps:
       - uses: actions/checkout@v3
-      - uses: scalacenter/sbt-dependency-graph-action@v0.1.0-M2
+      - uses: scalacenter/sbt-dependency-graph-action@v1.0.0-RC1
 ```
 
 ### Inputs
