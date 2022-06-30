@@ -1,9 +1,22 @@
 name: 'sbt-dependency-graph-action'
-description: 'Submit the dependency graph of an sbt build to the Github Dependency API'
+description: 'Submits the dependency graph of an sbt build to the Github Submission API'
 author: 'The Scala Center'
 branding:
   icon: 'package'
   color: '#1a84ac'
+inputs:
+  base-dir:
+    description: "The relative path of the base directory of the sbt build."
+    required: false
+    default: ''
+  projects:
+    description: "A list of space-separated names of projects from your build. The action will publish the graph of these projects only. Default is the empty string and it means all projects."
+    required: false
+    default: ''
+  scala-versions:
+    description: "A list of space-separated versions of Scala, that are declared in your build. The action will publish the graph on these Scala versions only. Defaulat is the empty string and it means all Scala versions."
+    required: false
+    default: ''
 runs:
   using: 'node16'
   main: 'dist/index.js'
