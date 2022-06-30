@@ -1,4 +1,4 @@
-# Sbt dependency Graph Action
+# Sbt Dependency Graph Action
 
 A Github action to submit the dependency graphs of an [sbt](https://www.scala-sbt.org/) build to the Github Dependency submission API.
 
