@@ -47,7 +47,7 @@ const fsPromises = __importStar(__nccwpck_require__(292));
 const os = __importStar(__nccwpck_require__(37));
 const path = __importStar(__nccwpck_require__(17));
 // Version of the sbt-github-dependency-graph-plugin
-const pluginVersion = '1.0.0-RC1';
+const pluginVersion = '1.0.0';
 function commandExists(cmd) {
     return __awaiter(this, void 0, void 0, function* () {
         const isWin = os.platform() === 'win32';
