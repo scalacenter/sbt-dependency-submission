@@ -1,4 +1,4 @@
-# sbt-dependency-graph-action
+# Sbt dependency Graph Action
 
 A Github action to submit the dependency graphs of an [sbt](https://www.scala-sbt.org/) build to the Github Dependency submission API.
 
@@ -31,7 +31,7 @@ jobs:
       contents: write # this permission is needed to submit the dependency graph
     steps:
       - uses: actions/checkout@v3
-      - uses: scalacenter/sbt-dependency-graph-action@v1.0.0-RC1
+      - uses: scalacenter/sbt-dependency-graph-action@v1
 ```
 
 ### Inputs
@@ -57,7 +57,7 @@ The action will publish the graph on these Scala versions only.
 
 Example: `2.13.8 3.1.3`
 
-Default is empty string and it means all scala versions.
+Default is empty string and it means all Scala versions.
 
 #### Example
 
