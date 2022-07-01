@@ -1,4 +1,4 @@
-name: 'sbt-dependency-graph-action'
+name: 'Sbt Dependency Graph Action'
 description: 'Submits the dependency graph of an sbt build to the Github Submission API'
 author: 'The Scala Center'
 branding:
