@@ -1,0 +1,71 @@
+package ch.epfl.scala.githubapi
+@target(Scala)
+@codecPackage("ch.epfl.scala.githubapi")
+@fullCodec("JsonProtocol")
+
+## Github Dependency Submission API version 0
+## Taken from https://gist.github.com/reiddraper/fdab2883db0f372c146d1a750fc1c43f
+
+type DependencySnapshot {
+  version: Int!
+  job: ch.epfl.scala.githubapi.Job!
+  sha: String! ## sha of the Git commit
+  ref: String! ## ref of the Git commit; example: "refs/heads/main"
+  detector: ch.epfl.scala.githubapi.DetectorMetadata!
+  metadata: raw"Map[String, sjsonnew.shaded.scalajson.ast.unsafe.JValue]"!
+  manifests: raw"Map[String, ch.epfl.scala.githubapi.Manifest]"!
+  scanned: String ## ISO8601Date
+}
+
+type Job {
+  correlator: String!
+  id: String!
+  html_url: String
+}
+
+type DetectorMetadata {
+  name: String!
+  url: String!
+  version: String!
+}
+
+type Manifest {
+  name: String!
+  file: ch.epfl.scala.githubapi.FileInfo
+  metadata: raw"Map[String, sjsonnew.shaded.scalajson.ast.unsafe.JValue]"!
+  resolved: raw"Map[String, ch.epfl.scala.githubapi.DependencyNode]"!
+}
+
+type FileInfo {
+  source_location: String
+}
+
+## A notation of whether a dependency is requested directly
+## by this manifest, or is a dependency of another dependency.
+enum DependencyRelationship {
+  direct
+  indirect
+}
+
+## A notation of whether the dependency is required for the primary
+## build artifact (runtime), or is only used for development.
+## Future versions of this specification may allow for more granular
+## scopes, like `runtime:server`, `runtime:shipped`,
+## `development:test`, `development:benchmark`.
+enum DependencyScope {
+  runtime
+  development
+}
+
+type DependencyNode {
+  package_url: String!
+  metadata: raw"Map[String, sjsonnew.shaded.scalajson.ast.unsafe.JValue]"!
+  relationship: ch.epfl.scala.githubapi.DependencyRelationship
+  scope: ch.epfl.scala.githubapi.DependencyScope
+  dependencies: [String]
+}
+
+type SnapshotResponse {
+  id: Int!,
+  created_at: String ## ISO8601Date
+}
