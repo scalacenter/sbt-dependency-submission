@@ -1,10 +1,19 @@
 > 'githubSubmitDependencyGraph {}'
 > checkManifests 5
-> 'githubSubmitDependencyGraph {"projects":[], "scalaVersions":["2.13.8"]}'
+
+> 'githubSubmitDependencyGraph {"scalaVersions":["2.13.8"]}'
 > checkManifests 3
+
 > 'githubSubmitDependencyGraph {"projects":[], "scalaVersions":["2.12.16", "2.13.8"]}'
 > checkManifests 4
+
 > 'githubSubmitDependencyGraph {"projects":["a", "b"], "scalaVersions":[]}'
 > checkManifests 4
-> 'githubSubmitDependencyGraph {"projects":["a"], "scalaVersions":["2.12.16", "3.1.3"]}'
+
+# slightly different scala versions than defined in project a
+# it should still work since the binary versions are the same
+> 'githubSubmitDependencyGraph {"projects":["a"], "scalaVersions":["2.12.15", "3.1.2"]}'
 > checkManifests 2
+
+# Unknown project c, it should fail
+-> 'githubSubmitDependencyGraph {"projects":["b", "c"]}'
