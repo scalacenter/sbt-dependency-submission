@@ -1,6 +1,6 @@
 # Sbt Dependency Graph Action
 
-A Github action to submit the dependency graphs of an [sbt](https://www.scala-sbt.org/) build to the Github Dependency submission API.
+A Github action to submit the dependency graphs of an [sbt](https://www.scala-sbt.org/) build to the Github [Dependency submission API](https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/using-the-dependency-submission-api).
 
 After the workflow has been successfully run, the graph of the sbt build is visible in the [Dependency Graph](https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/exploring-the-dependencies-of-a-repository) page of the Insights tab.
 
@@ -25,8 +25,6 @@ jobs:
   submit-graph:
     name: Submit Dependency Graph
     runs-on: ubuntu-latest # or windows-latest, or macOS-latest
-    env:
-      GITHUB_TOKEN: ${{ github.token }}
     permissions:
       contents: write # this permission is needed to submit the dependency graph
     steps:

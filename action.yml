@@ -10,13 +10,17 @@ inputs:
     required: false
     default: ''
   projects:
-    description: "A list of space-separated names of projects from your build. The action will publish the graph of these projects only. Default is the empty string and it means all projects."
+    description: "A list of space-separated names of projects from your build. The action will publish the graph of these projects only. If unspecified, the action will detect all the projects of the build."
     required: false
     default: ''
   scala-versions:
-    description: "A list of space-separated versions of Scala, that are declared in your build. The action will publish the graph on these Scala versions only. Defaulat is the empty string and it means all Scala versions."
+    description: "A list of space-separated versions of Scala, that are declared in your build. The action will publish the graph on these Scala versions only. If unspecified, the action will detect all the Scala versions of the build."
     required: false
     default: ''
+  token:
+    description: "GitHub Personal Access Token (PAT). Defaults to PAT provided by Action runner."
+    required: false
+    default: ${{ github.token }}
   sbt-plugin-version:
     description: "Override the version of the sbt-github-dependency-graph plugin that is used internally."
     required: false
