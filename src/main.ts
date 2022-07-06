@@ -18,19 +18,24 @@ async function commandExists(cmd: string): Promise<boolean> {
 
 async function run(): Promise<void> {
   try {
+    const token = core.getInput('token')
+    core.setSecret(token)
+    
     const baseDirInput = core.getInput('base-dir')
     const baseDir = baseDirInput.length === 0 ? '.' : baseDirInput
     const projectDir = path.join(baseDir, 'project')
-    const uuid = crypto.randomUUID()
-    const pluginVersionInput = core.getInput('sbt-plugin-version')
-    const pluginVersion =
-      pluginVersionInput.length === 0 ? defaultPluginVersion : pluginVersionInput
-    const pluginFile = path.join(projectDir, `github-dependency-graph-${uuid}.sbt`)
-    const pluginDep = `addSbtPlugin("ch.epfl.scala" % "sbt-github-dependency-graph" % "${pluginVersion}")`
     if (!fs.existsSync(projectDir)) {
       core.setFailed(`${baseDir} is not a valid sbt project: missing folder '${projectDir}'.`)
       return
     }
+
+    const uuid = crypto.randomUUID()
+    const pluginFile = path.join(projectDir, `github-dependency-graph-${uuid}.sbt`)
+    
+    const pluginVersionInput = core.getInput('sbt-plugin-version')
+    const pluginVersion =
+      pluginVersionInput.length === 0 ? defaultPluginVersion : pluginVersionInput
+    const pluginDep = `addSbtPlugin("ch.epfl.scala" % "sbt-github-dependency-graph" % "${pluginVersion}")`
     await fsPromises.writeFile(pluginFile, pluginDep)
     const sbtExists = await commandExists('sbt')
     if (!sbtExists) {
@@ -49,9 +54,8 @@ async function run(): Promise<void> {
         .filter(value => value.length > 0),
     }
 
-    await cli.exec('sbt', [`githubSubmitDependencyGraph ${JSON.stringify(input)}`], {
-      cwd: baseDir,
-    })
+    process.env['GITHUB_TOKEN'] = token
+    await cli.exec('sbt', [`githubSubmitDependencyGraph ${JSON.stringify(input)}`], { cwd: baseDir })
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(error)
