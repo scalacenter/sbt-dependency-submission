@@ -7,7 +7,7 @@ import * as os from 'os'
 import * as path from 'path'
 
 // Version of the sbt-github-dependency-graph-plugin
-const pluginVersion = '1.0.0'
+const defaultPluginVersion = '1.0.0'
 
 async function commandExists(cmd: string): Promise<boolean> {
   const isWin = os.platform() === 'win32'
@@ -22,6 +22,8 @@ async function run(): Promise<void> {
     const baseDir = baseDirInput.length === 0 ? '.' : baseDirInput
     const projectDir = path.join(baseDir, 'project')
     const uuid = crypto.randomUUID()
+    const pluginVersionInput = core.getInput('sbt-plugin-version')
+    const pluginVersion = pluginVersionInput.length === 0 ? defaultPluginVersion : pluginVersionInput
     const pluginFile = path.join(projectDir, `github-dependency-graph-${uuid}.sbt`)
     const pluginDep = `addSbtPlugin("ch.epfl.scala" % "sbt-github-dependency-graph" % "${pluginVersion}")`
     if (!fs.existsSync(projectDir)) {
