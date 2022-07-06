@@ -47,7 +47,7 @@ const fsPromises = __importStar(__nccwpck_require__(292));
 const os = __importStar(__nccwpck_require__(37));
 const path = __importStar(__nccwpck_require__(17));
 // Version of the sbt-github-dependency-graph-plugin
-const pluginVersion = '1.0.0';
+const defaultPluginVersion = '1.0.0';
 function commandExists(cmd) {
     return __awaiter(this, void 0, void 0, function* () {
         const isWin = os.platform() === 'win32';
@@ -63,6 +63,8 @@ function run() {
             const baseDir = baseDirInput.length === 0 ? '.' : baseDirInput;
             const projectDir = path.join(baseDir, 'project');
             const uuid = crypto.randomUUID();
+            const pluginVersionInput = core.getInput('sbt-plugin-version');
+            const pluginVersion = pluginVersionInput.length === 0 ? defaultPluginVersion : pluginVersionInput;
             const pluginFile = path.join(projectDir, `github-dependency-graph-${uuid}.sbt`);
             const pluginDep = `addSbtPlugin("ch.epfl.scala" % "sbt-github-dependency-graph" % "${pluginVersion}")`;
             if (!fs.existsSync(projectDir)) {
@@ -85,7 +87,9 @@ function run() {
                     .split(' ')
                     .filter(value => value.length > 0),
             };
-            yield cli.exec('sbt', [`githubSubmitDependencyGraph ${JSON.stringify(input)}`]);
+            yield cli.exec('sbt', [`githubSubmitDependencyGraph ${JSON.stringify(input)}`], {
+                cwd: baseDir,
+            });
         }
         catch (error) {
             if (error instanceof Error) {
