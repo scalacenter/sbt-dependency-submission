@@ -20,7 +20,7 @@ async function run(): Promise<void> {
   try {
     const token = core.getInput('token')
     core.setSecret(token)
-    
+
     const baseDirInput = core.getInput('base-dir')
     const baseDir = baseDirInput.length === 0 ? '.' : baseDirInput
     const projectDir = path.join(baseDir, 'project')
@@ -31,7 +31,7 @@ async function run(): Promise<void> {
 
     const uuid = crypto.randomUUID()
     const pluginFile = path.join(projectDir, `github-dependency-graph-${uuid}.sbt`)
-    
+
     const pluginVersionInput = core.getInput('sbt-plugin-version')
     const pluginVersion =
       pluginVersionInput.length === 0 ? defaultPluginVersion : pluginVersionInput
@@ -55,7 +55,9 @@ async function run(): Promise<void> {
     }
 
     process.env['GITHUB_TOKEN'] = token
-    await cli.exec('sbt', [`githubSubmitDependencyGraph ${JSON.stringify(input)}`], { cwd: baseDir })
+    await cli.exec('sbt', [`githubSubmitDependencyGraph ${JSON.stringify(input)}`], {
+      cwd: baseDir,
+    })
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(error)
