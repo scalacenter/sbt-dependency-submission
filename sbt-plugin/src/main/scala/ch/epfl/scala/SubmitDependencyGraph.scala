@@ -92,21 +92,32 @@ object SubmitDependencyGraph {
   // project refs that have a Scala version, filtered according to input.projects
   private def getScalaProjectRefs(state: State, input: SubmitInput): Seq[ProjectRef] = {
     val loadedBuild = state.setting(Keys.loadedBuild)
-    val allScalaProjectRefs = loadedBuild.allProjectRefs
+    val allProjectRefs = loadedBuild.allProjectRefs
       .map(_._1)
       .filter(ref => state.getSetting(ref / Keys.scalaVersion).isDefined)
-    val projectFilter = input.projects.toSet
-    if (projectFilter.isEmpty) allScalaProjectRefs
-    else allScalaProjectRefs.filter(ref => projectFilter.contains(ref.project))
+    if (input.projects.isEmpty) allProjectRefs
+    else {
+      val allProjectNames = allProjectRefs.map(_.project)
+      val unknownProjects = input.projects.filter(p => !allProjectNames.contains(p))
+      if (unknownProjects.nonEmpty)
+        throw new MessageOnlyException(s"Unknown projects: ${unknownProjects.mkString(", ")}")
+      allProjectRefs.filter(ref => input.projects.contains(ref.project))
+    }
   }
 
   private def getScalaVersions(state: State, input: SubmitInput, projectRefs: Seq[ProjectRef]): Seq[String] = {
-    val scalaVersionFilter = input.scalaVersions.toSet
-    val allScalaVersions = projectRefs
+    val allVersions = projectRefs
       .flatMap(projectRef => state.setting(projectRef / Keys.crossScalaVersions))
       .distinct
-    if (scalaVersionFilter.isEmpty) allScalaVersions
-    else allScalaVersions.filter(scalaVersionFilter.contains)
+    if (input.scalaVersions.isEmpty) allVersions
+    else {
+      val unknownVersions = input.scalaVersions.filter(v => !allVersions.contains(v))
+      if (unknownVersions.nonEmpty) {
+        val projectSelection = if (input.projects.nonEmpty) "selected projects" else "build"
+        state.log.warn(s"Unknown Scala versions in the $projectSelection: ${unknownVersions.mkString(", ")}")
+      }
+      input.scalaVersions
+    }
   }
 
   private def githubDependencySnapshot(state: State): DependencySnapshot = {
