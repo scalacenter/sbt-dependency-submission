@@ -7,7 +7,7 @@ def isCI = System.getenv("CI") != null
 inThisBuild(
   Seq(
     organization := "ch.epfl.scala",
-    homepage := Some(url("https://github.com/scalacenter/sbt-github-dependency-graph")),
+    homepage := Some(url("https://github.com/scalacenter/sbt-dependency-graph-action")),
     onLoadMessage := s"Welcome to sbt-github-dependency-graph ${version.value}",
     licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
     developers := Developers.all,
