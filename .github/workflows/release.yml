@@ -1,0 +1,22 @@
+name: Release
+on:
+  workflow_dispatch:
+  push:
+    tags: ["*"]
+jobs:
+  publish:
+    name: Release sbt plugin
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: coursier/setup-action@v1.2.0-M3
+        with:
+          apps: sbt
+          jvm: 'adopt:1.8'
+      - run: sbt ci-release
+        working-directory: sbt-plugin
+        env:
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+          PGP_SECRET: ${{ secrets.PGP_SECRET }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}

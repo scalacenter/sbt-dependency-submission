@@ -17,6 +17,10 @@ inputs:
     description: "A list of space-separated versions of Scala, that are declared in your build. The action will publish the graph on these Scala versions only. Defaulat is the empty string and it means all Scala versions."
     required: false
     default: ''
+  sbt-plugin-version:
+    description: "Override the version of the sbt-github-dependency-graph plugin that is used internally."
+    required: false
+    default: ''
 runs:
   using: 'node16'
   main: 'dist/index.js'

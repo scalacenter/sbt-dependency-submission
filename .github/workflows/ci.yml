@@ -1,0 +1,70 @@
+name: Continuous Integration
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  scalafmt:
+    name: Scalafmt and Scalafix
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sbt-plugin
+    steps:
+      - uses: actions/checkout@v3
+      - uses: coursier/setup-action@v1.2.0-M3
+        with:
+          apps: scalafmt sbt
+      - run: scalafmt --test
+      - run: sbt 'scalafixAll -test'
+  
+  test-sbt:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        jvm: ['adopt:1.8', 'adopt:1.11', 'temurin:1.17']
+      fail-fast: false
+    name: Test sbt plugin on ${{ matrix.os }} - ${{ matrix.jvm }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: sbt-plugin
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v3
+    - uses: coursier/setup-action@v1.2.0-M3
+      with:
+        jvm: ${{ matrix.jvm }}
+        apps: sbt
+    - run: sbt test
+    - run: sbt scripted
+  
+  test-action:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+      fail-fast: false
+    name: Test Github action on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v3
+    - run: sbt publishLocal
+      working-directory: sbt-plugin
+    - run: npm install
+    - run: npm run all
+    - name: Run sbt-dependency-graph-action
+      uses: ./
+      with:
+        base-dir: sbt-plugin
+        sbt-plugin-version: 1.1.0-SNAPSHOT
+        
