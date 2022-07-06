@@ -30,7 +30,7 @@
     "@actions/exec": "^1.1.0"
   },
   "devDependencies": {
-    "@types/node": "^17.0.30",
+    "@types/node": "^18.0.3",
     "@vercel/ncc": "^0.34.0",
     "eslint-plugin-github": "^4.3.6",
     "js-yaml": "^4.1.0",
