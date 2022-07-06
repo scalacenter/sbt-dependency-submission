@@ -65,5 +65,5 @@ jobs:
       uses: ./
       with:
         base-dir: sbt-plugin
-        sbt-plugin-version: 1.1.0-SNAPSHOT
+        sbt-plugin-version: 1.2.0-SNAPSHOT
         

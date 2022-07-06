@@ -13,7 +13,7 @@ inThisBuild(
     developers := Developers.all,
     version ~= { dynVer =>
       if (isRelease) dynVer
-      else "1.1.0-SNAPSHOT" // only for local publishing
+      else "1.2.0-SNAPSHOT" // only for local publishing
     },
     // Scalafix settings
     semanticdbEnabled := true,
