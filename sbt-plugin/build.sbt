@@ -1,5 +1,5 @@
 def isRelease() =
-  System.getenv("GITHUB_REPOSITORY") == "scalacenter/sbt-github-dependency-graph" &&
+  System.getenv("GITHUB_REPOSITORY") == "scalacenter/sbt-dependency-graph-action" &&
     System.getenv("GITHUB_WORKFLOW") == "Release"
 
 def isCI = System.getenv("CI") != null
