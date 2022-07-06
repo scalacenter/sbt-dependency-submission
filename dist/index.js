@@ -90,7 +90,9 @@ function run() {
                     .filter(value => value.length > 0),
             };
             process.env['GITHUB_TOKEN'] = token;
-            yield cli.exec('sbt', [`githubSubmitDependencyGraph ${JSON.stringify(input)}`], { cwd: baseDir });
+            yield cli.exec('sbt', [`githubSubmitDependencyGraph ${JSON.stringify(input)}`], {
+                cwd: baseDir,
+            });
         }
         catch (error) {
             if (error instanceof Error) {
