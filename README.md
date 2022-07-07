@@ -70,3 +70,14 @@ steps:
       projects: foo bar
       scala-versions: 2.13.8 3.1.3
 ```
+
+## Troubleshooting
+
+### Unexpected Status: 404
+
+This error happens when the `Dependency Graph` feature is disabled.
+You can enable it in `Settings` > `Code Security and Analysis`.
+
+![image](https://user-images.githubusercontent.com/13123162/177736071-5bd63d3c-d338-4e51-a3c9-ad8d11e35508.png)
+
+
