@@ -1,12 +1,12 @@
-name: 'Sbt Dependency Graph Action'
-description: 'Submits the dependency graph of an sbt build to the Github Submission API'
+name: 'Scala Dependency Graph Action'
+description: 'Submits the dependency graph of your Scala build to the Github Submission API'
 author: 'The Scala Center'
 branding:
   icon: 'package'
   color: '#1a84ac'
 inputs:
   base-dir:
-    description: "The relative path of the base directory of the sbt build."
+    description: "The relative path of the base directory of your Scala build."
     required: false
     default: ''
   projects:
@@ -21,8 +21,8 @@ inputs:
     description: "GitHub Personal Access Token (PAT). Defaults to PAT provided by Action runner."
     required: false
     default: ${{ github.token }}
-  sbt-plugin-version:
-    description: "Override the version of the sbt-github-dependency-graph plugin that is used internally."
+  plugin-version:
+    description: "Override the version of the (mill/sbt) plugin that is used internally."
     required: false
     default: ''
 runs:

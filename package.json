@@ -1,8 +1,8 @@
 {
-  "name": "sbt-dependency-graph-action",
+  "name": "scala-dependency-graph-action",
   "version": "1.1.0",
   "private": true,
-  "description": "Submit the dependency graph of an sbt build to Github",
+  "description": "Submit the dependency graph of your Scala build to Github",
   "main": "lib/main.js",
   "scripts": {
     "build": "tsc",
@@ -14,12 +14,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/scalacenter/sbt-dependency-graph-action.git"
+    "url": "git+https://github.com/scalacenter/scala-dependency-graph-action.git"
   },
   "keywords": [
     "actions",
     "scala",
     "sbt",
+    "mill",
     "dependency",
     "graph"
   ],
