@@ -9,6 +9,10 @@ inputs:
     description: "The relative path of the base directory of your Scala build."
     required: false
     default: ''
+  build-tool:
+    description: "The build tool used for your workspace."
+    required: false
+    default: ''
   projects:
     description: "A list of space-separated names of projects from your build. The action will publish the graph of these projects only. If unspecified, the action will detect all the projects of the build."
     required: false

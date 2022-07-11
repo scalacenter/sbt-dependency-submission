@@ -14,6 +14,12 @@ const defaultSbtPluginVersion = '1.1.0'
 const defaultMillPluginVersion = '0.0.11'
 const defaultMillVersion = '0.10.5'
 
+const Mill = 'mill'
+const Sbt = 'sbt'
+const NoChoice = ''
+
+const supportedBuildToolChoices = [NoChoice, Sbt, Mill]
+
 async function commandExists(cmd: string): Promise<boolean> {
   const isWin = os.platform() === 'win32'
   const where = isWin ? 'where.exe' : 'which'
@@ -98,6 +104,20 @@ async function runMill(baseDir: string, pluginVersionInput: string): Promise<voi
   )
 }
 
+function isValidMillWorkspace(baseDir: string, buildToolChoice: string): boolean {
+  return (
+    (buildToolChoice === Mill || buildToolChoice === NoChoice) &&
+    fs.existsSync(path.join(baseDir, 'build.sc'))
+  )
+}
+
+function isValidSbtWorkspace(baseDir: string, buildToolChoice: string): boolean {
+  return (
+    (buildToolChoice === Sbt || buildToolChoice === NoChoice) &&
+    fs.existsSync(path.join(baseDir, 'build.sbt'))
+  )
+}
+
 async function run(): Promise<void> {
   try {
     const token = core.getInput('token')
@@ -105,13 +125,20 @@ async function run(): Promise<void> {
     process.env['GITHUB_TOKEN'] = token
 
     const baseDirInput = core.getInput('base-dir')
+    const buildToolChoice = core.getInput('build-tool').toLowerCase()
+
+    if (supportedBuildToolChoices.includes(buildToolChoice)) {
+      core.setFailed(`The "build-tool" setting must be a either "${Mill}" or ${Sbt}`)
+      return
+    }
+
     const baseDir = baseDirInput.length === 0 ? '.' : baseDirInput
 
     const pluginVersionInput = core.getInput('plugin-version')
 
-    if (fs.existsSync(path.join(baseDir, 'build.sc'))) {
+    if (isValidMillWorkspace(baseDir, buildToolChoice)) {
       runMill(baseDir, pluginVersionInput)
-    } else if (fs.existsSync(path.join(baseDir, 'build.sbt'))) {
+    } else if (isValidSbtWorkspace(baseDir, buildToolChoice)) {
       runSbt(baseDir, pluginVersionInput)
     } else {
       core.setFailed('Unable to find a build file for any of the supported build tools.')

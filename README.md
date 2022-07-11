@@ -54,6 +54,12 @@ jobs:
 The relative path of the base directory of your build.
 Default value is `.`
 
+#### - `build-tool` (optional)
+
+A choice of either `sbt` or `mill`. This is useful in situations where you may
+have both a `build.sbt` and a `build.sc`. By default we'll try to best detect
+your workspace type based on your build files.
+
 #### - `projects` (optional)
 
 A list of space-separated names of projects from your build.
