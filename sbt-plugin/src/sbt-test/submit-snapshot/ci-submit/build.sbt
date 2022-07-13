@@ -14,7 +14,7 @@ inThisBuild(
 )
 
 val a = project
-  .in(file("a"))
+  .in(file("."))
   .settings(
     scalaVersion := "2.13.8",
     crossScalaVersions := Seq(

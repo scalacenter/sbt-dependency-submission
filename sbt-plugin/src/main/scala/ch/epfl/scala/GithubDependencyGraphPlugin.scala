@@ -25,6 +25,7 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
       .map(_.toConfigRef)
 
   object autoImport {
+    val githubSubmitInputKey: AttributeKey[SubmitInput] = AttributeKey("githubSubmitInput")
     val githubManifestsKey: AttributeKey[Map[String, githubapi.Manifest]] = AttributeKey("githubDependencyManifests")
     val githubProjectsKey: AttributeKey[Seq[ProjectRef]] = AttributeKey("githubProjectRefs")
     val githubDependencyManifest: TaskKey[githubapi.Manifest] = taskKey("The dependency manifest of the project")
@@ -63,11 +64,9 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
     val state = Keys.state.value
 
     val projectRefs = state
-      .get(githubProjectsKey)
-      .getOrElse(
-        throw new MessageOnlyException(s"The ${githubProjectsKey.label} attribute is not initialized")
-      )
+      .attributes(githubProjectsKey)
       .filter(ref => state.setting(ref / Keys.scalaVersion) == scalaVersionInput)
+      .filter(ref => includeProject(ref, state))
 
     Def.task {
       val manifests: Map[String, Manifest] = projectRefs
@@ -77,22 +76,28 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
         .collect { case Some(manifest) => (manifest.name, manifest) }
         .toMap
       StateTransform { state =>
-        val oldManifests =
-          state
-            .get(githubManifestsKey)
-            .getOrElse(
-              throw new MessageOnlyException(s"The ${githubManifestsKey.label} attribute is not initialized")
-            )
+        val oldManifests = state.attributes(githubManifestsKey)
         state.put(githubManifestsKey, oldManifests ++ manifests)
       }
     }
+  }
+
+  private def includeProject(projectRef: ProjectRef, state: State): Boolean = {
+    val ignoredModules = state.attributes(githubSubmitInputKey).ignoredModules
+    val scalaVersion = state.setting(projectRef / Keys.artifactName / Keys.scalaVersion)
+    val scalaBinaryVersion = state.setting(projectRef / Keys.artifactName / Keys.scalaBinaryVersion)
+    val projectID = state.setting(projectRef / Keys.projectID)
+    val moduleName = CrossVersion(scalaVersion, scalaBinaryVersion).apply(projectID).name
+    !ignoredModules.contains(moduleName)
   }
 
   private def manifestTask: Def.Initialize[Task[Manifest]] = Def.task {
     // updateFull is needed to have information about callers and reconstruct dependency tree
     val report = Keys.updateFull.value
     val projectID = Keys.projectID.value
-    val crossVersion = CrossVersion.apply(Keys.scalaVersion.value, Keys.scalaBinaryVersion.value)
+    val scalaVersion = (Keys.artifactName / Keys.scalaVersion).value
+    val scalaBinaryVersion = (Keys.artifactName / Keys.scalaBinaryVersion).value
+    val crossVersion = CrossVersion.apply(scalaVersion, scalaBinaryVersion)
     val allDirectDependencies = Keys.allDependencies.value
     val baseDirectory = Keys.baseDirectory.value
 

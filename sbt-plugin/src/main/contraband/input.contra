@@ -5,9 +5,7 @@ package ch.epfl.scala
 
 ## Input of the githubSubmitDependencyGraph command
 type SubmitInput {
-  ## A set of projects. An empty array means all projects.
-  projects: [String]
-
-  ## A set of Scala versions. An empty array means all scala versions.
-  scalaVersions: [String]
+  ## A set of modules to ignore, a module is the artifact ID of a project on a particular scala version
+  ## Typically it would be something like foo_2.13
+  ignoredModules: [String]
 }

@@ -30,7 +30,7 @@ class JsonProtocolTests extends FunSuite {
     import ch.epfl.scala.JsonProtocol._
     val raw = Parser.parseUnsafe("{}")
     val obtained = Converter.fromJson[SubmitInput](raw).get
-    val expected = SubmitInput(Vector.empty, Vector.empty)
+    val expected = SubmitInput(Vector.empty)
     assertEquals(obtained, expected)
   }
 }
