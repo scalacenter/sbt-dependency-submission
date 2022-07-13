@@ -1,6 +1,6 @@
 {
-  "name": "sbt-dependency-graph-action",
-  "version": "1.1.0",
+  "name": "sbt-dependency-submission",
+  "version": "1.2.0-SNAPSHOT",
   "private": true,
   "description": "Submit the dependency graph of an sbt build to Github",
   "main": "lib/main.js",
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/scalacenter/sbt-dependency-graph-action.git"
+    "url": "git+https://github.com/scalacenter/sbt-dependency-submission.git"
   },
   "keywords": [
     "actions",

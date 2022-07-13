@@ -1,4 +1,4 @@
-# Sbt Dependency Graph Action
+# Sbt Dependency Submission
 
 A Github action to submit the dependency graph of an [sbt](https://www.scala-sbt.org/) build to the Github [Dependency submission API](https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/using-the-dependency-submission-api).
 
@@ -17,59 +17,46 @@ Create a Github Action file under `.github/workflows` containing the following d
 
 ```yml
 # .github/workflows/dependency-graph.yml
-name: Submit Dependency Graph
+name: Update Dependency Graph
 on:
   push:
     branches:
       - main # default branch of the project
 jobs:
-  submit-graph:
-    name: Submit Dependency Graph
+  dependency-graph:
+    name: Update Dependency Graph
     runs-on: ubuntu-latest # or windows-latest, or macOS-latest
     permissions:
       contents: write # this permission is needed to submit the dependency graph
     steps:
       - uses: actions/checkout@v3
-      - uses: scalacenter/sbt-dependency-graph-action@v1
+      - uses: scalacenter/sbt-dependency-submission@v1
 ```
 
 ### Inputs
 
-#### - `base-dir` (optional)
+#### - `working-directory` (optional)
 
-The  relative path of the base directory of your sbt build.
+The  relative path of the working directory of your sbt build.
 Default value is `.`
 
-#### - `projects` (optional)
+#### - `modules-ignore` (optional)
 
-A list of space-separated names of projects from your build.
-The action will publish the graph of these projects only.
-
-Example: `foo bar`
-
-Default is empty string and it means all projects.
-
-#### - `scala-versions` (optional)
-
-A list of space-separated versions of Scala, that are declared in your build.
-The action will publish the graph on these Scala versions only.
-
-Example: `2.13.8 3.1.3`
-
-Default is empty string and it means all Scala versions.
+A list of space-separated names of modules to ignore. The action will not resolve nor submit the dependencies of these modules.
+The name of a module contains the name of the project and its binary version.
+Example: `foo_2.13 bar_2.13`
 
 #### Example
 
-In this example the snapshot will contain the graphs of `foo_2.13`, `foo_3`, `bar_2.13` and `bar_3`.
+In this example the snapshot will not contain the graphs of `foo_2.13` and `bar_3`.
 
 ```yaml
 steps:
   - uses: actions/checkout@v3
-  - uses: scalacenter/sbt-dependency-graph-action@v0.1.0-M1
+  - uses: scalacenter/sbt-dependency-submission@v1
     with:
       base-dir: ./my-scala-project
-      projects: foo bar
-      scala-versions: 2.13.8 3.1.3
+      projects: foo_2.13 bar_3
 ```
 
 ## Troubleshooting

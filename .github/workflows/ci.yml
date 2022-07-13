@@ -61,9 +61,9 @@ jobs:
     - run: npm version
     - run: npm install
     - run: npm run all
-    - name: Run sbt-dependency-graph-action
+    - name: Run sbt-dependency-submission
       uses: ./
       with:
-        base-dir: sbt-plugin
+        working-directory: sbt-plugin
         sbt-plugin-version: 1.2.0-SNAPSHOT
         

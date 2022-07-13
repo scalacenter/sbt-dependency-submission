@@ -46,13 +46,10 @@ object SubmitDependencyGraph {
   private def submit(state: State, input: SubmitInput): State = {
     checkGithubEnv() // fail fast if the Github CI environment is incomplete
     val loadedBuild = state.setting(Keys.loadedBuild)
-    // all project refs that have a Scala version and a moduleID
+    // all project refs that have a Scala version
     val projectRefs = loadedBuild.allProjectRefs
       .map(_._1)
-      .filter { ref =>
-        state.getSetting(ref / Keys.scalaVersion).isDefined &&
-        state.getSetting(ref / Keys.projectID).isDefined
-      }
+      .filter(ref => state.getSetting(ref / Keys.scalaVersion).isDefined)
     // all cross scala versions of those projects
     val scalaVersions = projectRefs
       .flatMap(projectRef => state.setting(projectRef / Keys.crossScalaVersions))
@@ -103,9 +100,9 @@ object SubmitDependencyGraph {
 
   private def githubDependencySnapshot(state: State): DependencySnapshot = {
     val detector = DetectorMetadata(
-      SbtGithubDependencyGraph.name,
-      SbtGithubDependencyGraph.homepage.map(_.toString).getOrElse(""),
-      SbtGithubDependencyGraph.version
+      SbtGithubDependencySubmission.name,
+      SbtGithubDependencySubmission.homepage.map(_.toString).getOrElse(""),
+      SbtGithubDependencySubmission.version
     )
     val scanned = Instant.now
     val manifests = state.get(githubManifestsKey).get
