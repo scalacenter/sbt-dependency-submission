@@ -7,7 +7,7 @@ import * as os from 'os'
 import * as path from 'path'
 
 // Version of the sbt-github-dependency-submission plugin
-const pluginVersion = '1.2.0-SNAPSHOT'
+const pluginVersion = '2.0.0'
 
 async function commandExists(cmd: string): Promise<boolean> {
   const isWin = os.platform() === 'win32'

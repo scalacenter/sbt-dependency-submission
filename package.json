@@ -1,6 +1,6 @@
 {
   "name": "sbt-dependency-submission",
-  "version": "1.2.0-SNAPSHOT",
+  "version": "2.0.0",
   "private": true,
   "description": "Submit the dependency graph of an sbt build to Github",
   "main": "lib/main.js",
