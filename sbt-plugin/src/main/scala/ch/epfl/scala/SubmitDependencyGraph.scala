@@ -61,7 +61,7 @@ object SubmitDependencyGraph {
       .put(githubProjectsKey, projectRefs)
 
     val storeAllManifests = scalaVersions.flatMap { scalaVersion =>
-      Seq(s"++$scalaVersion", s"${githubStoreDependencyManifests.key} $scalaVersion")
+      Seq(s"++$scalaVersion", s"Global/${githubStoreDependencyManifests.key} $scalaVersion")
     }
     val commands = storeAllManifests :+ SubmitInternal
     commands.toList ::: initState
