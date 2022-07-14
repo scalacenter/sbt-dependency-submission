@@ -3,9 +3,17 @@ package ch.epfl.scala
 @codecPackage("ch.epfl.scala")
 @fullCodec("JsonProtocol")
 
+enum OnFailure {
+  error
+  warning
+}
+
 ## Input of the githubSubmitDependencyGraph command
 type SubmitInput {
-  ## A set of modules to ignore, a module is the artifact ID of a project on a particular scala version
-  ## Typically it would be something like foo_2.13
+  onResolveFailure: ch.epfl.scala.OnFailure
+
+  ## A set of modules to ignore.
+  ## The name of module is composed of the name of the project and its binary version.
+  ## Example: foo_2.13
   ignoredModules: [String]
 }

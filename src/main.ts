@@ -30,7 +30,7 @@ async function run(): Promise<void> {
     }
 
     const uuid = crypto.randomUUID()
-    const pluginFile = path.join(projectDir, `github-dependency-graph-${uuid}.sbt`)
+    const pluginFile = path.join(projectDir, `github-dependency-submission-${uuid}.sbt`)
 
     const pluginDep = `addSbtPlugin("ch.epfl.scala" % "sbt-github-dependency-submission" % "${pluginVersion}")`
     await fsPromises.writeFile(pluginFile, pluginDep)
@@ -40,12 +40,20 @@ async function run(): Promise<void> {
       return
     }
 
-    const input = {
-      ignoredModules: core
-        .getInput('modules-ignore')
-        .split(' ')
-        .filter(value => value.length > 0),
+    const ignoredModules = core
+      .getInput('modules-ignore')
+      .split(' ')
+      .filter(value => value.length > 0)
+
+    const onResolveFailure = core.getInput('on-resolve-failure')
+    if (!['error', 'warning'].includes(onResolveFailure)) {
+      core.setFailed(
+        `Invalid on-resolve-failure input. Should be 'error' or 'warning', found ${onResolveFailure}.`,
+      )
+      return
     }
+
+    const input = { ignoredModules, onResolveFailure }
 
     process.env['GITHUB_TOKEN'] = token
     await cli.exec('sbt', [`githubSubmitDependencyGraph ${JSON.stringify(input)}`], {

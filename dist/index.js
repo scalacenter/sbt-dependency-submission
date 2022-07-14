@@ -69,7 +69,7 @@ function run() {
                 return;
             }
             const uuid = crypto.randomUUID();
-            const pluginFile = path.join(projectDir, `github-dependency-graph-${uuid}.sbt`);
+            const pluginFile = path.join(projectDir, `github-dependency-submission-${uuid}.sbt`);
             const pluginDep = `addSbtPlugin("ch.epfl.scala" % "sbt-github-dependency-submission" % "${pluginVersion}")`;
             yield fsPromises.writeFile(pluginFile, pluginDep);
             const sbtExists = yield commandExists('sbt');
@@ -77,12 +77,16 @@ function run() {
                 core.setFailed('Not found sbt command');
                 return;
             }
-            const input = {
-                ignoredModules: core
-                    .getInput('modules-ignore')
-                    .split(' ')
-                    .filter(value => value.length > 0),
-            };
+            const ignoredModules = core
+                .getInput('modules-ignore')
+                .split(' ')
+                .filter(value => value.length > 0);
+            const onResolveFailure = core.getInput('on-resolve-failure');
+            if (!['error', 'warning'].includes(onResolveFailure)) {
+                core.setFailed(`Invalid on-resolve-failure input. Should be 'error' or 'warning', found ${onResolveFailure}.`);
+                return;
+            }
+            const input = { ignoredModules, onResolveFailure };
             process.env['GITHUB_TOKEN'] = token;
             yield cli.exec('sbt', [`githubSubmitDependencyGraph ${JSON.stringify(input)}`], {
                 cwd: workingDir,

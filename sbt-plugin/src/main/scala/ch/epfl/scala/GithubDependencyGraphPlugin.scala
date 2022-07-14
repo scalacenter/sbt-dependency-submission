@@ -28,7 +28,9 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
     val githubSubmitInputKey: AttributeKey[SubmitInput] = AttributeKey("githubSubmitInput")
     val githubManifestsKey: AttributeKey[Map[String, githubapi.Manifest]] = AttributeKey("githubDependencyManifests")
     val githubProjectsKey: AttributeKey[Seq[ProjectRef]] = AttributeKey("githubProjectRefs")
-    val githubDependencyManifest: TaskKey[githubapi.Manifest] = taskKey("The dependency manifest of the project")
+    val githubDependencyManifest: TaskKey[Option[githubapi.Manifest]] = taskKey(
+      "The dependency manifest of the project"
+    )
     val githubStoreDependencyManifests: InputKey[StateTransform] =
       inputKey("Store the dependency manifests of all projects of a Scala version in the attribute map.")
         .withRank(KeyRanks.DTask)
@@ -74,6 +76,7 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
         .map(ref => (ref / githubDependencyManifest).?)
         .join
         .value
+        .flatten
         .collect { case Some(manifest) => (manifest.name, manifest) }
         .toMap
       StateTransform { state =>
@@ -95,7 +98,7 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
     !ignored
   }
 
-  private def manifestTask: Def.Initialize[Task[Manifest]] = Def.task {
+  private def manifestTask: Def.Initialize[Task[Option[Manifest]]] = Def.task {
     // updateFull is needed to have information about callers and reconstruct dependency tree
     val reportResult = Keys.updateFull.result.value
     val projectID = Keys.projectID.value
@@ -105,6 +108,7 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
     val allDirectDependencies = Keys.allDependencies.value
     val baseDirectory = Keys.baseDirectory.value
     val logger = Keys.streams.value.log
+    val onResolveFailure = Keys.state.value.get(githubSubmitInputKey).flatMap(_.onResolveFailure)
 
     def getReference(module: ModuleID): String =
       crossVersion(module)
@@ -112,59 +116,66 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
         .withExtraAttributes(Map.empty)
         .toString
 
-    val alreadySeen = mutable.Set[String]()
-    val moduleReports = mutable.Buffer[(ModuleReport, ConfigRef)]()
-    val allDependencies = mutable.Buffer[(String, String)]()
-
-    val report = reportResult match {
+    reportResult match {
       case Inc(cause) =>
         val moduleName = crossVersion(projectID).name
-        logger.error(s"Failed to resolve the dependencies of $moduleName")
-        throw cause
-      case Value(report) => report
-    }
+        val message = s"Failed to resolve the dependencies of $moduleName"
+        onResolveFailure match {
+          case Some(OnFailure.warning) =>
+            logger.warn(message)
+            None
+          case _ =>
+            logger.error(message)
+            throw cause
+        }
+      case Value(report) =>
+        val alreadySeen = mutable.Set[String]()
+        val moduleReports = mutable.Buffer[(ModuleReport, ConfigRef)]()
+        val allDependencies = mutable.Buffer[(String, String)]()
 
-    for {
-      configReport <- report.configurations
-      moduleReport <- configReport.modules
-      moduleRef = getReference(moduleReport.module)
-      if !moduleReport.evicted && !alreadySeen.contains(moduleRef)
-    } {
-      alreadySeen += moduleRef
-      moduleReports += (moduleReport -> configReport.configuration)
-      for (caller <- moduleReport.callers)
-        allDependencies += (getReference(caller.caller) -> moduleRef)
-    }
-
-    val allDependenciesMap: Map[String, Vector[String]] = allDependencies.view
-      .groupBy(_._1)
-      .mapValues {
-        _.map { case (_, dep) => dep }.toVector
-      }
-    val allDirectDependenciesRefs: Set[String] = allDirectDependencies.map(getReference).toSet
-
-    val resolved =
-      for ((moduleReport, configRef) <- moduleReports)
-        yield {
-          val moduleRef = getReference(moduleReport.module)
-          val packageUrl = formatPackageUrl(moduleReport)
-          val dependencies = allDependenciesMap.getOrElse(moduleRef, Vector.empty)
-          val relationship =
-            if (allDirectDependenciesRefs.contains(moduleRef)) DependencyRelationship.direct
-            else DependencyRelationship.indirect
-          val scope =
-            if (isRuntime(configRef)) DependencyScope.runtime
-            else DependencyScope.development
-          val metadata = Map("config" -> JString(configRef.name))
-          val node = DependencyNode(packageUrl, metadata, Some(relationship), Some(scope), dependencies)
-          (moduleRef -> node)
+        for {
+          configReport <- report.configurations
+          moduleReport <- configReport.modules
+          moduleRef = getReference(moduleReport.module)
+          if !moduleReport.evicted && !alreadySeen.contains(moduleRef)
+        } {
+          alreadySeen += moduleRef
+          moduleReports += (moduleReport -> configReport.configuration)
+          for (caller <- moduleReport.callers)
+            allDependencies += (getReference(caller.caller) -> moduleRef)
         }
 
-    val projectModuleRef = getReference(projectID)
-    // TODO: find exact build file for this project
-    val file = githubapi.FileInfo("build.sbt")
-    val metadata = Map("baseDirectory" -> JString(baseDirectory.toString))
-    githubapi.Manifest(projectModuleRef, file, metadata, resolved.toMap)
+        val allDependenciesMap: Map[String, Vector[String]] = allDependencies.view
+          .groupBy(_._1)
+          .mapValues {
+            _.map { case (_, dep) => dep }.toVector
+          }
+        val allDirectDependenciesRefs: Set[String] = allDirectDependencies.map(getReference).toSet
+
+        val resolved =
+          for ((moduleReport, configRef) <- moduleReports)
+            yield {
+              val moduleRef = getReference(moduleReport.module)
+              val packageUrl = formatPackageUrl(moduleReport)
+              val dependencies = allDependenciesMap.getOrElse(moduleRef, Vector.empty)
+              val relationship =
+                if (allDirectDependenciesRefs.contains(moduleRef)) DependencyRelationship.direct
+                else DependencyRelationship.indirect
+              val scope =
+                if (isRuntime(configRef)) DependencyScope.runtime
+                else DependencyScope.development
+              val metadata = Map("config" -> JString(configRef.name))
+              val node = DependencyNode(packageUrl, metadata, Some(relationship), Some(scope), dependencies)
+              (moduleRef -> node)
+            }
+
+        val projectModuleRef = getReference(projectID)
+        // TODO: find exact build file for this project
+        val file = githubapi.FileInfo("build.sbt")
+        val metadata = Map("baseDirectory" -> JString(baseDirectory.toString))
+        val manifest = githubapi.Manifest(projectModuleRef, file, metadata, resolved.toMap)
+        Some(manifest)
+    }
   }
 
   private def formatPackageUrl(moduleReport: ModuleReport): String = {

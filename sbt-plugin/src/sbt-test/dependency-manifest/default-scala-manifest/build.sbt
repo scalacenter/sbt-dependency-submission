@@ -17,7 +17,7 @@ lazy val p1 = project
   .in(file("p1"))
   .settings(
     checkManifest := {
-      val manifest = githubDependencyManifest.value
+      val manifest = githubDependencyManifest.value.get
       assert(manifest.name == "ch.epfl.scala:p1_2.12:1.2.0-SNAPSHOT")
 
       // all dependencies are defined

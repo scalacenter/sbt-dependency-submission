@@ -16,6 +16,13 @@ inputs:
       Example: `foo_2.13 bar_2.13`
     required: false
     default: ''
+  on-resolve-failure:
+    description: |
+      Either 'error' or 'warning'.
+      When a dependency resolution failure happens, if 'error' the job will fail and will not submit the snapshot.
+      If 'warning', the job will ignore the failing modules and submit the snapshot.
+    required: false
+    default: error
   token:
     description: GitHub Personal Access Token (PAT). Defaults to PAT provided by Action runner.
     required: false

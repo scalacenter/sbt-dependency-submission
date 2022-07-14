@@ -20,7 +20,7 @@ lazy val p1 = project
       "io.circe" %% "circe-core" % "0.14.1"
     ),
     checkManifest := {
-      val manifest = githubDependencyManifest.value
+      val manifest = githubDependencyManifest.value.get
       assert(manifest.name == "ch.epfl.scala:p1_3:1.2.0-SNAPSHOT")
 
       // all dependencies are defined

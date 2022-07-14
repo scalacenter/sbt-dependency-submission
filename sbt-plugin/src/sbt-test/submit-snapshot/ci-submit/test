@@ -1,11 +1,12 @@
 > 'githubSubmitDependencyGraph {}'
-> checkManifests 4
+> Global / checkManifests 4
 
 > 'githubSubmitDependencyGraph {"ignoredModules":["a_2.13", "b_2.13"]}'
-> checkManifests 2
+> Global / checkManifests 2
 
 > 'githubSubmitDependencyGraph {"ignoredModules":["a_2.12", "a_2.13", "b_2.13"]}'
-> checkManifests 1
+> Global / checkManifests 1
 
 > 'githubSubmitDependencyGraph {"ignoredModules":[]}'
-> checkManifests 4
+> Global / checkManifests 4
+

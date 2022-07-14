@@ -16,29 +16,14 @@ inThisBuild(
 val a = project
   .in(file("."))
   .settings(
-    scalaVersion := "2.13.8",
-    crossScalaVersions := Seq(
-      "2.12.16",
-      "2.13.8",
-      "3.1.3"
-    ),
-    libraryDependencies ++= Seq(
-      // a dependency with many classifiers
-      ("org.lwjgl" % "lwjgl" % "3.3.1")
-        .classifier("natives-windows")
-        .classifier("natives-linux")
-        .classifier("natives-macos")
-    )
+    scalaVersion := "2.13.8"
   )
 
-// b is not cross-compiled
-// but we should still be able to resolve the manifests of the build on 2.12.16 and 3.1.3
-// this pattern is taken from scalameta/metals where metals, not cross-compiled, depends on mtags
-// which is cross-compiled
+// Update on b fails, because b on 2.12.16 depends on a on 2.13.8
 val b = project
   .in(file("b"))
   .settings(
-    scalaVersion := "2.13.8"
+    scalaVersion := "2.12.16"
   )
   .dependsOn(a)
 
