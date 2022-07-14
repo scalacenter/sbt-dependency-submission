@@ -97,13 +97,14 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
 
   private def manifestTask: Def.Initialize[Task[Manifest]] = Def.task {
     // updateFull is needed to have information about callers and reconstruct dependency tree
-    val report = Keys.updateFull.value
+    val reportResult = Keys.updateFull.result.value
     val projectID = Keys.projectID.value
     val scalaVersion = (Keys.artifactName / Keys.scalaVersion).value
     val scalaBinaryVersion = (Keys.artifactName / Keys.scalaBinaryVersion).value
     val crossVersion = CrossVersion.apply(scalaVersion, scalaBinaryVersion)
     val allDirectDependencies = Keys.allDependencies.value
     val baseDirectory = Keys.baseDirectory.value
+    val logger = Keys.streams.value.log
 
     def getReference(module: ModuleID): String =
       crossVersion(module)
@@ -114,6 +115,14 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
     val alreadySeen = mutable.Set[String]()
     val moduleReports = mutable.Buffer[(ModuleReport, ConfigRef)]()
     val allDependencies = mutable.Buffer[(String, String)]()
+
+    val report = reportResult match {
+      case Inc(cause) =>
+        val moduleName = crossVersion(projectID).name
+        logger.error(s"Failed to resolve the dependencies of $moduleName")
+        throw cause
+      case Value(report) => report
+    }
 
     for {
       configReport <- report.configurations
