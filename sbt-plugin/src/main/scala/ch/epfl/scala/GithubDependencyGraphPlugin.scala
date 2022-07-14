@@ -62,11 +62,12 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
   private def storeManifestsTask: Def.Initialize[InputTask[StateTransform]] = Def.inputTaskDyn {
     val scalaVersionInput = (Parsers.Space ~> scalaVersionParser).parsed
     val state = Keys.state.value
+    val logger = Keys.streams.value.log
 
     val projectRefs = state
       .attributes(githubProjectsKey)
       .filter(ref => state.setting(ref / Keys.scalaVersion) == scalaVersionInput)
-      .filter(ref => includeProject(ref, state))
+      .filter(ref => includeProject(ref, state, logger))
 
     Def.task {
       val manifests: Map[String, Manifest] = projectRefs
@@ -82,13 +83,16 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
     }
   }
 
-  private def includeProject(projectRef: ProjectRef, state: State): Boolean = {
+  private def includeProject(projectRef: ProjectRef, state: State, logger: Logger): Boolean = {
     val ignoredModules = state.attributes(githubSubmitInputKey).ignoredModules
     val scalaVersion = state.setting(projectRef / Keys.artifactName / Keys.scalaVersion)
     val scalaBinaryVersion = state.setting(projectRef / Keys.artifactName / Keys.scalaBinaryVersion)
     val projectID = state.setting(projectRef / Keys.projectID)
     val moduleName = CrossVersion(scalaVersion, scalaBinaryVersion).apply(projectID).name
-    !ignoredModules.contains(moduleName)
+    val ignored = ignoredModules.contains(moduleName)
+    if (!ignored) logger.info(s"Including dependency graph of $moduleName")
+    else logger.info(s"Excluding dependency graph of $moduleName")
+    !ignored
   }
 
   private def manifestTask: Def.Initialize[Task[Manifest]] = Def.task {
