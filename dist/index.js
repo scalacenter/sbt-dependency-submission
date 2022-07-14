@@ -47,7 +47,7 @@ const fsPromises = __importStar(__nccwpck_require__(292));
 const os = __importStar(__nccwpck_require__(37));
 const path = __importStar(__nccwpck_require__(17));
 // Version of the sbt-github-dependency-submission plugin
-const defaultPluginVersion = '1.1.0';
+const pluginVersion = '1.2.0-SNAPSHOT';
 function commandExists(cmd) {
     return __awaiter(this, void 0, void 0, function* () {
         const isWin = os.platform() === 'win32';
@@ -70,8 +70,6 @@ function run() {
             }
             const uuid = crypto.randomUUID();
             const pluginFile = path.join(projectDir, `github-dependency-graph-${uuid}.sbt`);
-            const pluginVersionInput = core.getInput('sbt-plugin-version');
-            const pluginVersion = pluginVersionInput.length === 0 ? defaultPluginVersion : pluginVersionInput;
             const pluginDep = `addSbtPlugin("ch.epfl.scala" % "sbt-github-dependency-submission" % "${pluginVersion}")`;
             yield fsPromises.writeFile(pluginFile, pluginDep);
             const sbtExists = yield commandExists('sbt');

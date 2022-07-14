@@ -20,10 +20,6 @@ inputs:
     description: GitHub Personal Access Token (PAT). Defaults to PAT provided by Action runner.
     required: false
     default: ${{ github.token }}
-  sbt-plugin-version:
-    description: Override the version of the sbt-github-dependency-submission plugin that is used internally."
-    required: false
-    default: ''
 runs:
   using: 'node16'
   main: 'dist/index.js'
