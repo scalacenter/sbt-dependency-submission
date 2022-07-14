@@ -46,8 +46,8 @@ const fs = __importStar(__nccwpck_require__(147));
 const fsPromises = __importStar(__nccwpck_require__(292));
 const os = __importStar(__nccwpck_require__(37));
 const path = __importStar(__nccwpck_require__(17));
-// Version of the sbt-github-dependency-graph-plugin
-const defaultPluginVersion = '1.1.0';
+// Version of the sbt-github-dependency-submission plugin
+const pluginVersion = '1.2.0-SNAPSHOT';
 function commandExists(cmd) {
     return __awaiter(this, void 0, void 0, function* () {
         const isWin = os.platform() === 'win32';
@@ -61,37 +61,35 @@ function run() {
         try {
             const token = core.getInput('token');
             core.setSecret(token);
-            const baseDirInput = core.getInput('base-dir');
-            const baseDir = baseDirInput.length === 0 ? '.' : baseDirInput;
-            const projectDir = path.join(baseDir, 'project');
+            const workingDirInput = core.getInput('working-directory');
+            const workingDir = workingDirInput.length === 0 ? '.' : workingDirInput;
+            const projectDir = path.join(workingDir, 'project');
             if (!fs.existsSync(projectDir)) {
-                core.setFailed(`${baseDir} is not a valid sbt project: missing folder '${projectDir}'.`);
+                core.setFailed(`${workingDir} is not a valid sbt project: missing folder '${projectDir}'.`);
                 return;
             }
             const uuid = crypto.randomUUID();
-            const pluginFile = path.join(projectDir, `github-dependency-graph-${uuid}.sbt`);
-            const pluginVersionInput = core.getInput('sbt-plugin-version');
-            const pluginVersion = pluginVersionInput.length === 0 ? defaultPluginVersion : pluginVersionInput;
-            const pluginDep = `addSbtPlugin("ch.epfl.scala" % "sbt-github-dependency-graph" % "${pluginVersion}")`;
+            const pluginFile = path.join(projectDir, `github-dependency-submission-${uuid}.sbt`);
+            const pluginDep = `addSbtPlugin("ch.epfl.scala" % "sbt-github-dependency-submission" % "${pluginVersion}")`;
             yield fsPromises.writeFile(pluginFile, pluginDep);
             const sbtExists = yield commandExists('sbt');
             if (!sbtExists) {
                 core.setFailed('Not found sbt command');
                 return;
             }
-            const input = {
-                projects: core
-                    .getInput('projects')
-                    .split(' ')
-                    .filter(value => value.length > 0),
-                scalaVersions: core
-                    .getInput('scala-versions')
-                    .split(' ')
-                    .filter(value => value.length > 0),
-            };
+            const ignoredModules = core
+                .getInput('modules-ignore')
+                .split(' ')
+                .filter(value => value.length > 0);
+            const onResolveFailure = core.getInput('on-resolve-failure');
+            if (!['error', 'warning'].includes(onResolveFailure)) {
+                core.setFailed(`Invalid on-resolve-failure input. Should be 'error' or 'warning', found ${onResolveFailure}.`);
+                return;
+            }
+            const input = { ignoredModules, onResolveFailure };
             process.env['GITHUB_TOKEN'] = token;
             yield cli.exec('sbt', [`githubSubmitDependencyGraph ${JSON.stringify(input)}`], {
-                cwd: baseDir,
+                cwd: workingDir,
             });
         }
         catch (error) {

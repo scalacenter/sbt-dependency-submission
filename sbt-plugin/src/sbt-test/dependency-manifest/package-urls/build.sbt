@@ -26,7 +26,7 @@ lazy val p1 = project
         .classifier("natives-macos")
     ),
     checkManifest := {
-      val manifest = githubDependencyManifest.value
+      val manifest = githubDependencyManifest.value.get
 
       checkDependency(manifest, "com.google.inject:guice:4.0")(
         expectedPackageUrl = "pkg:maven/com.google.inject/guice@4.0?packaging=no_aop"

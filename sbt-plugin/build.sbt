@@ -1,5 +1,5 @@
 def isRelease() =
-  System.getenv("GITHUB_REPOSITORY") == "scalacenter/sbt-dependency-graph-action" &&
+  System.getenv("GITHUB_REPOSITORY") == "scalacenter/sbt-dependency-submission" &&
     System.getenv("GITHUB_WORKFLOW") == "Release"
 
 def isCI = System.getenv("CI") != null
@@ -7,8 +7,8 @@ def isCI = System.getenv("CI") != null
 inThisBuild(
   Seq(
     organization := "ch.epfl.scala",
-    homepage := Some(url("https://github.com/scalacenter/sbt-dependency-graph-action")),
-    onLoadMessage := s"Welcome to sbt-github-dependency-graph ${version.value}",
+    homepage := Some(url("https://github.com/scalacenter/sbt-dependency-submission")),
+    onLoadMessage := s"Welcome to sbt-github-dependency-submission ${version.value}",
     licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
     developers := Developers.all,
     version ~= { dynVer =>
@@ -24,11 +24,11 @@ inThisBuild(
   )
 )
 
-val `sbt-github-dependency-graph` = project
+val `sbt-github-dependency-submission` = project
   .in(file("."))
   .enablePlugins(SbtPlugin, ContrabandPlugin, JsonCodecPlugin, BuildInfoPlugin)
   .settings(
-    name := "sbt-github-dependency-graph",
+    name := "sbt-github-dependency-submission",
     sbtVersion := "1.5.8",
     scalaVersion := "2.12.15",
     scalacOptions ++= Seq(
@@ -46,7 +46,7 @@ val `sbt-github-dependency-graph` = project
     ),
     buildInfoKeys := Seq[BuildInfoKey](name, version, homepage),
     buildInfoPackage := "ch.epfl.scala",
-    buildInfoObject := "SbtGithubDependencyGraph",
+    buildInfoObject := "SbtGithubDependencySubmission",
     scriptedLaunchOpts += s"-Dplugin.version=${version.value}",
     scriptedBufferLog := false,
     Compile / generateContrabands / contrabandFormatsForType := ContrabandConfig.getFormats,

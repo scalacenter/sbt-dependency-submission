@@ -23,7 +23,7 @@ lazy val p1 = project
       "org.scalatest" %% "scalatest" % "3.2.2" % Test
     ),
     checkManifest := {
-      val manifest = githubDependencyManifest.value
+      val manifest = githubDependencyManifest.value.get
       assert(manifest.name == "ch.epfl.scala:p1_2.12:1.2.0-SNAPSHOT")
 
       // all dependencies are defined
@@ -58,7 +58,7 @@ lazy val p2 = project
       "com.typesafe.akka" %% "akka-http" % "10.2.8"
     ),
     checkManifest := {
-      val manifest = githubDependencyManifest.value
+      val manifest = githubDependencyManifest.value.get
       assert(manifest.name == "ch.epfl.scala:p2_2.12:1.2.0-SNAPSHOT")
 
       // all dependencies are defined

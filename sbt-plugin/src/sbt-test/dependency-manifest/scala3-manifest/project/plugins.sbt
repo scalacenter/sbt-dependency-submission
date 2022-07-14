@@ -1,3 +1,3 @@
 val pluginVersion = sys.props("plugin.version")
 
-addSbtPlugin("ch.epfl.scala" % "sbt-github-dependency-graph" % pluginVersion)
+addSbtPlugin("ch.epfl.scala" % "sbt-github-dependency-submission" % pluginVersion)

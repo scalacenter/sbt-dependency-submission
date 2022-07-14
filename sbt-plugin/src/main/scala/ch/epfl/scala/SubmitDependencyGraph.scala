@@ -45,14 +45,23 @@ object SubmitDependencyGraph {
 
   private def submit(state: State, input: SubmitInput): State = {
     checkGithubEnv() // fail fast if the Github CI environment is incomplete
-    val projectRefs = getScalaProjectRefs(state, input)
-    val scalaVersions = getScalaVersions(state, input, projectRefs)
+    val loadedBuild = state.setting(Keys.loadedBuild)
+    // all project refs that have a Scala version
+    val projectRefs = loadedBuild.allProjectRefs
+      .map(_._1)
+      .filter(ref => state.getSetting(ref / Keys.scalaVersion).isDefined)
+    // all cross scala versions of those projects
+    val scalaVersions = projectRefs
+      .flatMap(projectRef => state.setting(projectRef / Keys.crossScalaVersions))
+      .distinct
+
     val initState = state
+      .put(githubSubmitInputKey, input)
       .put(githubManifestsKey, Map.empty[String, Manifest])
       .put(githubProjectsKey, projectRefs)
 
     val storeAllManifests = scalaVersions.flatMap { scalaVersion =>
-      Seq(s"++$scalaVersion", s"${githubStoreDependencyManifests.key} $scalaVersion")
+      Seq(s"++$scalaVersion", s"Global/${githubStoreDependencyManifests.key} $scalaVersion")
     }
     val commands = storeAllManifests :+ SubmitInternal
     commands.toList ::: initState
@@ -89,42 +98,11 @@ object SubmitDependencyGraph {
     }
   }
 
-  // project refs that have a Scala version, filtered according to input.projects
-  private def getScalaProjectRefs(state: State, input: SubmitInput): Seq[ProjectRef] = {
-    val loadedBuild = state.setting(Keys.loadedBuild)
-    val allProjectRefs = loadedBuild.allProjectRefs
-      .map(_._1)
-      .filter(ref => state.getSetting(ref / Keys.scalaVersion).isDefined)
-    if (input.projects.isEmpty) allProjectRefs
-    else {
-      val allProjectNames = allProjectRefs.map(_.project)
-      val unknownProjects = input.projects.filter(p => !allProjectNames.contains(p))
-      if (unknownProjects.nonEmpty)
-        throw new MessageOnlyException(s"Unknown projects: ${unknownProjects.mkString(", ")}")
-      allProjectRefs.filter(ref => input.projects.contains(ref.project))
-    }
-  }
-
-  private def getScalaVersions(state: State, input: SubmitInput, projectRefs: Seq[ProjectRef]): Seq[String] = {
-    val allVersions = projectRefs
-      .flatMap(projectRef => state.setting(projectRef / Keys.crossScalaVersions))
-      .distinct
-    if (input.scalaVersions.isEmpty) allVersions
-    else {
-      val unknownVersions = input.scalaVersions.filter(v => !allVersions.contains(v))
-      if (unknownVersions.nonEmpty) {
-        val projectSelection = if (input.projects.nonEmpty) "selected projects" else "build"
-        state.log.warn(s"Unknown Scala versions in the $projectSelection: ${unknownVersions.mkString(", ")}")
-      }
-      input.scalaVersions
-    }
-  }
-
   private def githubDependencySnapshot(state: State): DependencySnapshot = {
     val detector = DetectorMetadata(
-      SbtGithubDependencyGraph.name,
-      SbtGithubDependencyGraph.homepage.map(_.toString).getOrElse(""),
-      SbtGithubDependencyGraph.version
+      SbtGithubDependencySubmission.name,
+      SbtGithubDependencySubmission.homepage.map(_.toString).getOrElse(""),
+      SbtGithubDependencySubmission.version
     )
     val scanned = Instant.now
     val manifests = state.get(githubManifestsKey).get

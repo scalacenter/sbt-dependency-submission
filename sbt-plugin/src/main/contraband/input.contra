@@ -3,11 +3,17 @@ package ch.epfl.scala
 @codecPackage("ch.epfl.scala")
 @fullCodec("JsonProtocol")
 
+enum OnFailure {
+  error
+  warning
+}
+
 ## Input of the githubSubmitDependencyGraph command
 type SubmitInput {
-  ## A set of projects. An empty array means all projects.
-  projects: [String]
+  onResolveFailure: ch.epfl.scala.OnFailure
 
-  ## A set of Scala versions. An empty array means all scala versions.
-  scalaVersions: [String]
+  ## A set of modules to ignore.
+  ## The name of module is composed of the name of the project and its binary version.
+  ## Example: foo_2.13
+  ignoredModules: [String]
 }
