@@ -44,6 +44,7 @@ Default value is `.`
 
 A list of space-separated names of modules to ignore. The action will not resolve nor submit the dependencies of these modules.
 The name of a module contains the name of the project and its binary version.
+
 Example: `foo_2.13 bar_2.13`
 
 #### Example
@@ -56,7 +57,7 @@ steps:
   - uses: scalacenter/sbt-dependency-submission@v1
     with:
       base-dir: ./my-scala-project
-      projects: foo_2.13 bar_3
+      modules-ignore: foo_2.13 bar_3
 ```
 
 ## Troubleshooting
