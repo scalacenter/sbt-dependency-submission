@@ -26,8 +26,6 @@ jobs:
   dependency-graph:
     name: Update Dependency Graph
     runs-on: ubuntu-latest # or windows-latest, or macOS-latest
-    permissions:
-      contents: write # this permission is needed to submit the dependency graph
     steps:
       - uses: actions/checkout@v3
       - uses: scalacenter/sbt-dependency-submission@v2
@@ -52,9 +50,12 @@ Example: `foo_2.13 bar_2.13`
 In this example the snapshot will not contain the graphs of `foo_2.13` and `bar_3`.
 
 ```yaml
+
+## in .github/workflows/dependency-graph.md
+...
 steps:
   - uses: actions/checkout@v3
-  - uses: scalacenter/sbt-dependency-submission@v1
+  - uses: scalacenter/sbt-dependency-submission@v2
     with:
       base-dir: ./my-scala-project
       modules-ignore: foo_2.13 bar_3
@@ -68,5 +69,38 @@ This error happens when the `Dependency Graph` feature is disabled.
 You can enable it in `Settings` > `Code Security and Analysis`.
 
 ![image](https://user-images.githubusercontent.com/13123162/177736071-5bd63d3c-d338-4e51-a3c9-ad8d11e35508.png)
+
+### Unexpected Status: 403
+
+This error happens when the workflow does not have the right permission on the repository.
+
+First you should check that the workflow is not triggered on PR from forked repositories.
+It should be triggered by push to the default branch.
+
+```yaml
+## in .github/workflows/dependency-graph.md
+on:
+  push:
+    branches:
+      - main # default branch of the project
+...
+```
+
+Then check that you enabled the read and write permissions for all workflows, at the bottom of the `Settings > Actions > General` page.
+
+![image](https://user-images.githubusercontent.com/13123162/179472237-bffea114-9e99-4736-83ef-00dc7f41149b.png)
+
+If you do not want to enable this you can add the write permission on the `dependency-graph` workflow only:
+
+```yaml
+## in .github/workflows/dependency-graph.md
+...
+permissions:
+      contents: write # this permission is needed to submit the dependency graph
+...
+```
+
+
+
 
 
