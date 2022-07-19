@@ -1,6 +1,6 @@
 {
   "name": "sbt-dependency-submission",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "private": true,
   "description": "Submit the dependency graph of an sbt build to Github",
   "main": "lib/main.js",
@@ -27,7 +27,8 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@actions/core": "^1.9.0",
-    "@actions/exec": "^1.1.0"
+    "@actions/exec": "^1.1.0",
+    "@actions/io": "^1.1.2"
   },
   "devDependencies": {
     "@types/node": "^17.0.30",
