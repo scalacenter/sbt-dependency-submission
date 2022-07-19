@@ -1,20 +1,13 @@
 import * as cli from '@actions/exec'
 import * as core from '@actions/core'
+import * as io from '@actions/io'
 import * as crypto from 'crypto'
 import * as fs from 'fs'
 import * as fsPromises from 'fs/promises'
-import * as os from 'os'
 import * as path from 'path'
 
 // Version of the sbt-github-dependency-submission plugin
-const pluginVersion = '2.0.0'
-
-async function commandExists(cmd: string): Promise<boolean> {
-  const isWin = os.platform() === 'win32'
-  const where = isWin ? 'where.exe' : 'which'
-  const code = await cli.exec(where, [cmd], { silent: true })
-  return code === 0
-}
+const pluginVersion = '2.0.1'
 
 async function run(): Promise<void> {
   try {
@@ -34,11 +27,8 @@ async function run(): Promise<void> {
 
     const pluginDep = `addSbtPlugin("ch.epfl.scala" % "sbt-github-dependency-submission" % "${pluginVersion}")`
     await fsPromises.writeFile(pluginFile, pluginDep)
-    const sbtExists = await commandExists('sbt')
-    if (!sbtExists) {
-      core.setFailed('Not found sbt command')
-      return
-    }
+    // check that sbt is installed
+    await io.which('sbt', true)
 
     const ignoredModules = core
       .getInput('modules-ignore')

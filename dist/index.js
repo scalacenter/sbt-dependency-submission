@@ -41,21 +41,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const cli = __importStar(__nccwpck_require__(514));
 const core = __importStar(__nccwpck_require__(186));
+const io = __importStar(__nccwpck_require__(351));
 const crypto = __importStar(__nccwpck_require__(113));
 const fs = __importStar(__nccwpck_require__(147));
 const fsPromises = __importStar(__nccwpck_require__(292));
-const os = __importStar(__nccwpck_require__(37));
 const path = __importStar(__nccwpck_require__(17));
 // Version of the sbt-github-dependency-submission plugin
-const pluginVersion = '2.0.0';
-function commandExists(cmd) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const isWin = os.platform() === 'win32';
-        const where = isWin ? 'where.exe' : 'which';
-        const code = yield cli.exec(where, [cmd], { silent: true });
-        return code === 0;
-    });
-}
+const pluginVersion = '2.0.1';
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -72,11 +64,8 @@ function run() {
             const pluginFile = path.join(projectDir, `github-dependency-submission-${uuid}.sbt`);
             const pluginDep = `addSbtPlugin("ch.epfl.scala" % "sbt-github-dependency-submission" % "${pluginVersion}")`;
             yield fsPromises.writeFile(pluginFile, pluginDep);
-            const sbtExists = yield commandExists('sbt');
-            if (!sbtExists) {
-                core.setFailed('Not found sbt command');
-                return;
-            }
+            // check that sbt is installed
+            yield io.which('sbt', true);
             const ignoredModules = core
                 .getInput('modules-ignore')
                 .split(' ')
