@@ -25,7 +25,7 @@ on:
 jobs:
   dependency-graph:
     name: Update Dependency Graph
-    runs-on: ubuntu-latest # or windows-latest, or macOS-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: scalacenter/sbt-dependency-submission@v2
