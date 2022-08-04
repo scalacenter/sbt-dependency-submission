@@ -24,8 +24,8 @@ jobs:
   test-sbt:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-        jvm: ['adopt:1.8', 'adopt:1.11', 'temurin:1.17']
+        os: [ubuntu-latest]
+        jvm: ['adopt:1.11', 'temurin:1.17']
       fail-fast: false
     name: Test sbt plugin on ${{ matrix.os }} - ${{ matrix.jvm }}
     runs-on: ${{ matrix.os }}
@@ -48,7 +48,7 @@ jobs:
   test-action:
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest]
       fail-fast: false
     name: Test Github action on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
