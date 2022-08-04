@@ -10,3 +10,5 @@
 > 'githubSubmitDependencyGraph {"ignoredModules":[]}'
 > Global / checkManifests 4 true
 
+> 'githubSubmitDependencyGraph {"ignoredDependencies":[{"organization":"org.scala-lang", "name": "scala-library"}]}'
+> Global / checkManifests 4 false
