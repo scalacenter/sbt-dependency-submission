@@ -117,13 +117,12 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
         .withExtraAttributes(Map.empty)
         .toString
 
-    def isIgnored(module: ModuleID): Boolean = {
+    def isIgnored(module: ModuleID): Boolean =
       ignoredDependencies.exists { ignored =>
         ignored.organization == module.organization &&
-          ignored.name.forall(_ == module.name) &&
-          ignored.revision.forall(_ == module.revision)
+        ignored.name.forall(_ == module.name) &&
+        ignored.revision.forall(_ == module.revision)
       }
-    }
 
     reportResult match {
       case Inc(cause) =>

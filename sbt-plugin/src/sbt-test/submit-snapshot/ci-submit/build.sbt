@@ -54,6 +54,8 @@ Global / checkManifests := {
     s"expected $expectedSize manifests, found ${manifests.size}"
   )
   assert(
-    expectScalaLibrary || manifests.values.forall(_.values.forall(_.dependencies.forall(!_.startsWith("org.scala-lang:scala-library"))))
+    expectScalaLibrary || manifests.values.forall(
+      _.values.forall(_.dependencies.forall(!_.startsWith("org.scala-lang:scala-library")))
+    )
   )
 }
