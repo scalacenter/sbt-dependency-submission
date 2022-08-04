@@ -30,7 +30,7 @@ class JsonProtocolTests extends FunSuite {
     import ch.epfl.scala.JsonProtocol._
     val raw = Parser.parseUnsafe("{}")
     val obtained = Converter.fromJson[SubmitInput](raw).get
-    val expected = SubmitInput(None, Vector.empty)
+    val expected = SubmitInput(None, Vector.empty, Vector.empty)
     assertEquals(obtained, expected)
   }
 
@@ -38,7 +38,15 @@ class JsonProtocolTests extends FunSuite {
     import ch.epfl.scala.JsonProtocol._
     val raw = Parser.parseUnsafe("""{"onResolveFailure": "warning"}""")
     val obtained = Converter.fromJson[SubmitInput](raw).get
-    val expected = SubmitInput(Some(OnFailure.warning), Vector.empty)
+    val expected = SubmitInput(Some(OnFailure.warning), Vector.empty, Vector.empty)
+    assertEquals(obtained, expected)
+  }
+
+  test("decode input with ignoredDependencies") {
+    import ch.epfl.scala.JsonProtocol._
+    val raw = Parser.parseUnsafe("""{"ignoredDependencies": [{"organization": "org.test", "name": "thing"}]}""")
+    val obtained = Converter.fromJson[SubmitInput](raw).get
+    val expected = SubmitInput(None, Vector.empty, Vector(Dependency("org.test", Some("thing"), None)))
     assertEquals(obtained, expected)
   }
 }

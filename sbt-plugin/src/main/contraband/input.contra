@@ -8,6 +8,12 @@ enum OnFailure {
   warning
 }
 
+type Dependency {
+  organization: String!
+  name: String
+  revision: String
+}
+
 ## Input of the githubSubmitDependencyGraph command
 type SubmitInput {
   onResolveFailure: ch.epfl.scala.OnFailure
@@ -16,4 +22,10 @@ type SubmitInput {
   ## The name of module is composed of the name of the project and its binary version.
   ## Example: foo_2.13
   ignoredModules: [String]
+
+  ## A set of dependencies to ignore.
+  ## Ignore a specific list of dependencies across all modules. Transitive dependencies will also be ignored unless
+  ## they're also a transitive dependency of something that isn't ignored.
+  ## Example:
+  ignoredDependencies: [ch.epfl.scala.Dependency]
 }

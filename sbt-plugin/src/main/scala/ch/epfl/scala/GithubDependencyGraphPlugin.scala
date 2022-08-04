@@ -106,6 +106,7 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
     val scalaBinaryVersion = (Keys.artifactName / Keys.scalaBinaryVersion).value
     val crossVersion = CrossVersion.apply(scalaVersion, scalaBinaryVersion)
     val allDirectDependencies = Keys.allDependencies.value
+    val ignoredDependencies = Keys.state.value.attributes(githubSubmitInputKey).ignoredDependencies
     val baseDirectory = Keys.baseDirectory.value
     val logger = Keys.streams.value.log
     val onResolveFailure = Keys.state.value.get(githubSubmitInputKey).flatMap(_.onResolveFailure)
@@ -115,6 +116,14 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
         .withConfigurations(None)
         .withExtraAttributes(Map.empty)
         .toString
+
+    def isIgnored(module: ModuleID): Boolean = {
+      ignoredDependencies.exists { ignored =>
+        ignored.organization == module.organization &&
+          ignored.name.forall(_ == module.name) &&
+          ignored.revision.forall(_ == module.revision)
+      }
+    }
 
     reportResult match {
       case Inc(cause) =>
@@ -137,7 +146,7 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
           configReport <- report.configurations
           moduleReport <- configReport.modules
           moduleRef = getReference(moduleReport.module)
-          if !moduleReport.evicted && !alreadySeen.contains(moduleRef)
+          if !moduleReport.evicted && !alreadySeen.contains(moduleRef) && !isIgnored(moduleReport.module)
         } {
           alreadySeen += moduleRef
           moduleReports += (moduleReport -> configReport.configuration)

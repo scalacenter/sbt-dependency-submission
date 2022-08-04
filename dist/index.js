@@ -70,12 +70,34 @@ function run() {
                 .getInput('modules-ignore')
                 .split(' ')
                 .filter(value => value.length > 0);
+            const ignoredDependencies = core
+                .getInput('dependencies-ignore')
+                .split(' ')
+                .filter(value => value.length > 0)
+                .map(value => {
+                const parts = value.split(':');
+                if (parts.length === 1) {
+                    return { organization: parts[0] };
+                }
+                else if (parts.length === 2) {
+                    return { organization: parts[0], name: parts[1] };
+                }
+                else if (parts.length === 3) {
+                    return { organization: parts[0], name: parts[1], version: parts[2] };
+                }
+                else {
+                    core.setFailed(`dependencies-ignore. Should be a space-separated list of dependency declarations, 
+            with organization, name (optional) and version (optional) separated by single colons: 
+            'org1(:name1)(:version1) org2(:name2)(:version2)'.`);
+                    return {};
+                }
+            });
             const onResolveFailure = core.getInput('on-resolve-failure');
             if (!['error', 'warning'].includes(onResolveFailure)) {
                 core.setFailed(`Invalid on-resolve-failure input. Should be 'error' or 'warning', found ${onResolveFailure}.`);
                 return;
             }
-            const input = { ignoredModules, onResolveFailure };
+            const input = { ignoredModules, ignoredDependencies, onResolveFailure };
             process.env['GITHUB_TOKEN'] = token;
             yield cli.exec('sbt', [`githubSubmitDependencyGraph ${JSON.stringify(input)}`], {
                 cwd: workingDir,

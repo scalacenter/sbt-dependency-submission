@@ -44,7 +44,7 @@ val b = project
 
 Global / checkManifests := {
   val logger = streams.value.log
-  val expectedSize: Int = (Space ~> NatBasic).parsed
+  val (expectedSize, expectScalaLibrary): (Int, Boolean) = (Space ~> NatBasic ~ (Space ~> Bool)).parsed
   val manifests = state.value.get(githubManifestsKey).getOrElse {
     throw new MessageOnlyException(s"Not found ${githubManifestsKey.label} attribute")
   }
@@ -52,5 +52,8 @@ Global / checkManifests := {
   assert(
     manifests.size == expectedSize,
     s"expected $expectedSize manifests, found ${manifests.size}"
+  )
+  assert(
+    expectScalaLibrary || manifests.values.forall(_.values.forall(_.dependencies.forall(!_.startsWith("org.scala-lang:scala-library"))))
   )
 }
