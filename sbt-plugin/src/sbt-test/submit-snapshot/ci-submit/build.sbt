@@ -55,7 +55,7 @@ Global / checkManifests := {
   )
   assert(
     expectScalaLibrary || manifests.values.forall(
-      _.values.forall(_.dependencies.forall(!_.startsWith("org.scala-lang:scala-library")))
+      _.resolved.values.forall(_.dependencies.forall(!_.startsWith("org.scala-lang:scala-library")))
     )
   )
 }
