@@ -45,6 +45,12 @@ The name of a module contains the name of the project and its binary version.
 
 Example: `foo_2.13 bar_2.13`
 
+#### - `token` (optional)
+
+GitHub Personal Access Token (PAT). Defaults to PAT provided by Action runner.
+
+Example: `${{ secrets.USER_TOKEN }}`
+
 #### Example
 
 In this example the snapshot will not contain the graphs of `foo_2.13` and `bar_3`.
@@ -100,6 +106,9 @@ permissions:
 ...
 ```
 
+### sbt.librarymanagement.ResolveException: Error downloading
+
+This error may happen when you try to access artifacts from private GitHub packages with the default GitHub token. You need to pass personal access token which is allowed to access private packages in the `token` input.
 
 
 
