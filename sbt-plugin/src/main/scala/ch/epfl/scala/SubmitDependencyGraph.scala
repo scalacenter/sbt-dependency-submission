@@ -41,7 +41,7 @@ object SubmitDependencyGraph {
         .parseFromString(raw.mkString)
         .flatMap(Converter.fromJson[SubmitInput])
         .get
-    }
+    }.failOnException
 
   private def submit(state: State, input: SubmitInput): State = {
     checkGithubEnv() // fail fast if the Github CI environment is incomplete
