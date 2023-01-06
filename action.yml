@@ -16,6 +16,12 @@ inputs:
       Example: `foo_2.13 bar_2.13`
     required: false
     default: ''
+  configs-ignore:
+    description: |
+      A list of space-separated names of configurations to ignore. The action will not submit the dependencies of these configurations.
+      Example: `test scala-doc-tool`
+    required: false
+    default: ''
   on-resolve-failure:
     description: |
       Either 'error' or 'warning'.

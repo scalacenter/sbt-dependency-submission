@@ -45,6 +45,12 @@ The name of a module contains the name of the project and its binary version.
 
 Example: `foo_2.13 bar_2.13`
 
+#### - `configs-ignore` (optional)
+
+A list of space-separated names of configurations to ignore. The action will not submit the dependencies of these configurations.
+
+Example of configurations are `compile`, `test`, `scala-tool`, `scala-doc-tool`.
+
 #### - `token` (optional)
 
 GitHub Personal Access Token (PAT). Defaults to PAT provided by Action runner.
@@ -52,6 +58,8 @@ GitHub Personal Access Token (PAT). Defaults to PAT provided by Action runner.
 Example: `${{ secrets.USER_TOKEN }}`
 
 #### Example
+
+##### Excluding some projects or some Scala versions from the dependency submission.
 
 In this example the snapshot will not contain the graphs of `foo_2.13` and `bar_3`.
 
@@ -65,6 +73,22 @@ steps:
     with:
       base-dir: ./my-scala-project
       modules-ignore: foo_2.13 bar_3
+```
+
+#### Excluding the Scaladoc dependencies.
+
+In this example the snapshot will not contain the dependencies of the scala-doc-tool configuration.
+
+```yaml
+
+## in .github/workflows/dependency-graph.md
+...
+steps:
+  - uses: actions/checkout@v3
+  - uses: scalacenter/sbt-dependency-submission@v2
+    with:
+      base-dir: ./my-scala-project
+      configs-ignore: scala-doc-tool
 ```
 
 ## Troubleshooting

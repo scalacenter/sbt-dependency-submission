@@ -35,6 +35,11 @@ async function run(): Promise<void> {
       .split(' ')
       .filter(value => value.length > 0)
 
+    const ignoredConfigs = core
+      .getInput('configs-ignore')
+      .split(' ')
+      .filter(value => value.length > 0)
+
     const onResolveFailure = core.getInput('on-resolve-failure')
     if (!['error', 'warning'].includes(onResolveFailure)) {
       core.setFailed(
@@ -43,7 +48,7 @@ async function run(): Promise<void> {
       return
     }
 
-    const input = { ignoredModules, onResolveFailure }
+    const input = { ignoredModules, ignoredConfigs, onResolveFailure }
 
     process.env['GITHUB_TOKEN'] = token
     await cli.exec('sbt', [`githubSubmitDependencyGraph ${JSON.stringify(input)}`], {
