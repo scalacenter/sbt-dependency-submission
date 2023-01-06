@@ -7,7 +7,7 @@ import * as fsPromises from 'fs/promises'
 import * as path from 'path'
 
 // Version of the sbt-github-dependency-submission plugin
-const pluginVersion = '2.0.1'
+const pluginVersion = '2.1.0'
 
 async function run(): Promise<void> {
   try {
