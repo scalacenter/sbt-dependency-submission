@@ -16,4 +16,11 @@ type SubmitInput {
   ## The name of module is composed of the name of the project and its binary version.
   ## Example: foo_2.13
   ignoredModules: [String]
+
+  ## A set of sbt configurations to ignore.
+  ## Examples:
+  ##  - "test" to ignore the test dependencies
+  ##  - "scala-doc-tool" to ignore the scaladoc dependencies
+  ##  - "scala-tool" to ignore the compiler dependencies
+  ignoredConfigs: [String]
 }
