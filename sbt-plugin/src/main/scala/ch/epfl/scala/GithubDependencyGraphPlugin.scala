@@ -88,14 +88,18 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
 
   private def includeProject(projectRef: ProjectRef, state: State, logger: Logger): Boolean = {
     val ignoredModules = state.attributes(githubSubmitInputKey).ignoredModules
-    val scalaVersion = state.setting(projectRef / Keys.artifactName / Keys.scalaVersion)
-    val scalaBinaryVersion = state.setting(projectRef / Keys.artifactName / Keys.scalaBinaryVersion)
-    val projectID = state.setting(projectRef / Keys.projectID)
-    val moduleName = CrossVersion(scalaVersion, scalaBinaryVersion).apply(projectID).name
+    val moduleName = getModuleName(projectRef, state)
     val ignored = ignoredModules.contains(moduleName)
     if (!ignored) logger.info(s"Including dependency graph of $moduleName")
     else logger.info(s"Excluding dependency graph of $moduleName")
     !ignored
+  }
+
+  private def getModuleName(projectRef: ProjectRef, state: State): String = {
+    val scalaVersion = state.setting(projectRef / Keys.artifactName / Keys.scalaVersion)
+    val scalaBinaryVersion = state.setting(projectRef / Keys.artifactName / Keys.scalaBinaryVersion)
+    val projectID = state.setting(projectRef / Keys.projectID)
+    CrossVersion(scalaVersion, scalaBinaryVersion).apply(projectID).name
   }
 
   private def manifestTask: Def.Initialize[Task[Option[Manifest]]] = Def.task {
@@ -108,7 +112,11 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
     val allDirectDependencies = Keys.allDependencies.value
     val baseDirectory = Keys.baseDirectory.value
     val logger = Keys.streams.value.log
-    val onResolveFailure = Keys.state.value.get(githubSubmitInputKey).flatMap(_.onResolveFailure)
+    val input = Keys.state.value.get(githubSubmitInputKey)
+
+    val onResolveFailure = input.flatMap(_.onResolveFailure)
+    val ignoredConfigs = input.toSeq.flatMap(_.ignoredConfigs).toSet
+    val moduleName = crossVersion(projectID).name
 
     def getReference(module: ModuleID): String =
       crossVersion(module)
@@ -116,9 +124,14 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
         .withExtraAttributes(Map.empty)
         .toString
 
+    def includeConfig(config: ConfigRef): Boolean =
+      if (ignoredConfigs.contains(config.name)) {
+        logger.info(s"Excluding config ${config.name} of ${moduleName} from its dependency graph")
+        false
+      } else true
+
     reportResult match {
       case Inc(cause) =>
-        val moduleName = crossVersion(projectID).name
         val message = s"Failed to resolve the dependencies of $moduleName"
         onResolveFailure match {
           case Some(OnFailure.warning) =>
@@ -132,9 +145,9 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
         val alreadySeen = mutable.Set[String]()
         val moduleReports = mutable.Buffer[(ModuleReport, ConfigRef)]()
         val allDependencies = mutable.Buffer[(String, String)]()
-
         for {
           configReport <- report.configurations
+          if includeConfig(configReport.configuration)
           moduleReport <- configReport.modules
           moduleRef = getReference(moduleReport.module)
           if !moduleReport.evicted && !alreadySeen.contains(moduleRef)
