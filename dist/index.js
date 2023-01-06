@@ -70,12 +70,16 @@ function run() {
                 .getInput('modules-ignore')
                 .split(' ')
                 .filter(value => value.length > 0);
+            const ignoredConfigs = core
+                .getInput('configs-ignore')
+                .split(' ')
+                .filter(value => value.length > 0);
             const onResolveFailure = core.getInput('on-resolve-failure');
             if (!['error', 'warning'].includes(onResolveFailure)) {
                 core.setFailed(`Invalid on-resolve-failure input. Should be 'error' or 'warning', found ${onResolveFailure}.`);
                 return;
             }
-            const input = { ignoredModules, onResolveFailure };
+            const input = { ignoredModules, ignoredConfigs, onResolveFailure };
             process.env['GITHUB_TOKEN'] = token;
             yield cli.exec('sbt', [`githubSubmitDependencyGraph ${JSON.stringify(input)}`], {
                 cwd: workingDir,
