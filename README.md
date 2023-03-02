@@ -71,7 +71,7 @@ steps:
   - uses: actions/checkout@v3
   - uses: scalacenter/sbt-dependency-submission@v2
     with:
-      base-dir: ./my-scala-project
+      working-directory: ./my-scala-project
       modules-ignore: foo_2.13 bar_3
 ```
 
@@ -87,7 +87,7 @@ steps:
   - uses: actions/checkout@v3
   - uses: scalacenter/sbt-dependency-submission@v2
     with:
-      base-dir: ./my-scala-project
+      working-directory: ./my-scala-project
       configs-ignore: scala-doc-tool
 ```
 
