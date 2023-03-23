@@ -12,6 +12,7 @@ import ch.epfl.scala.GithubDependencyGraphPlugin.autoImport._
 import ch.epfl.scala.JsonProtocol._
 import ch.epfl.scala.githubapi.JsonProtocol._
 import ch.epfl.scala.githubapi._
+import gigahorse.FullResponse
 import gigahorse.HttpClient
 import gigahorse.support.apachehttp.Gigahorse
 import sbt._
@@ -69,34 +70,40 @@ object SubmitDependencyGraph {
 
   private def submitInternal(state: State): State = {
     val snapshot = githubDependencySnapshot(state)
-    val url = new URL(s"${githubApiUrl()}/repos/${githubRepository()}/dependency-graph/snapshots")
+    val snapshotUrl = s"${githubApiUrl()}/repos/${githubRepository()}/dependency-graph/snapshots"
 
     val snapshotJson = CompactPrinter(Converter.toJsonUnsafe(snapshot))
     val request = Gigahorse
-      .url(url.toString)
+      .url(snapshotUrl)
       .post(snapshotJson, StandardCharsets.UTF_8)
       .addHeaders(
         "Content-Type" -> "application/json",
         "Authorization" -> s"token ${githubToken()}"
       )
 
-    state.log.info(s"Submiting dependency snapshot to $url")
+    state.log.info(s"Submiting dependency snapshot to $snapshotUrl")
     val result = for {
-      httpResp <- Try(Await.result(http.run(request), Duration.Inf))
-      jsonResp <- JsonParser.parseFromByteBuffer(httpResp.bodyAsByteBuffer)
-      response <- Converter.fromJson[SnapshotResponse](jsonResp)
-    } yield new URL(url, response.id.toString)
-
-    result match {
-      case scala.util.Success(result) =>
-        state.log.info(s"Submitted successfully as $result")
-        state
-      case scala.util.Failure(cause) =>
-        throw new MessageOnlyException(
-          s"Failed to submit the dependency snapshot because of ${cause.getClass.getName}: ${cause.getMessage}"
-        )
+      httpResp <- Try(Await.result(http.processFull(request), Duration.Inf))
+      snapshot <- getSnapshot(httpResp)
+    } yield {
+      state.log.info(s"Submitted successfully as $snapshotUrl/${snapshot.id}")
+      state
     }
+
+    result.get
   }
+
+  private def getSnapshot(httpResp: FullResponse): Try[SnapshotResponse] =
+    httpResp.status match {
+      case status if status / 100 == 2 =>
+        JsonParser
+          .parseFromByteBuffer(httpResp.bodyAsByteBuffer)
+          .flatMap(Converter.fromJson[SnapshotResponse])
+      case status =>
+        val message =
+          s"Unexpected status $status ${httpResp.statusText} with body:\n${httpResp.bodyAsString}"
+        throw new MessageOnlyException(message)
+    }
 
   private def githubDependencySnapshot(state: State): DependencySnapshot = {
     val detector = DetectorMetadata(
