@@ -1,5 +1,8 @@
 package ch.epfl.scala
 
+import java.nio.file.Path
+import java.nio.file.Paths
+
 import scala.collection.mutable
 import scala.util.Properties
 
@@ -26,6 +29,7 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
 
   object autoImport {
     val githubSubmitInputKey: AttributeKey[SubmitInput] = AttributeKey("githubSubmitInput")
+    val githubWorkspace: AttributeKey[Path] = AttributeKey("githubWorkspace")
     val githubManifestsKey: AttributeKey[Map[String, githubapi.Manifest]] = AttributeKey("githubDependencyManifests")
     val githubProjectsKey: AttributeKey[Seq[ProjectRef]] = AttributeKey("githubProjectRefs")
     val githubDependencyManifest: TaskKey[Option[githubapi.Manifest]] = taskKey(
@@ -106,16 +110,20 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
     // updateFull is needed to have information about callers and reconstruct dependency tree
     val reportResult = Keys.updateFull.result.value
     val projectID = Keys.projectID.value
+    val root = Paths.get(Keys.loadedBuild.value.root).toAbsolutePath
     val scalaVersion = (Keys.artifactName / Keys.scalaVersion).value
     val scalaBinaryVersion = (Keys.artifactName / Keys.scalaBinaryVersion).value
     val crossVersion = CrossVersion.apply(scalaVersion, scalaBinaryVersion)
     val allDirectDependencies = Keys.allDependencies.value
     val baseDirectory = Keys.baseDirectory.value
     val logger = Keys.streams.value.log
-    val input = Keys.state.value.get(githubSubmitInputKey)
+    val state = Keys.state.value
 
-    val onResolveFailure = input.flatMap(_.onResolveFailure)
-    val ignoredConfigs = input.toSeq.flatMap(_.ignoredConfigs).toSet
+    val inputOpt = state.get(githubSubmitInputKey)
+    val workspaceOpt = state.get(githubWorkspace)
+
+    val onResolveFailure = inputOpt.flatMap(_.onResolveFailure)
+    val ignoredConfigs = inputOpt.toSeq.flatMap(_.ignoredConfigs).toSet
     val moduleName = crossVersion(projectID).name
 
     def getReference(module: ModuleID): String =
@@ -183,10 +191,16 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
             }
 
         val projectModuleRef = getReference(projectID)
-        // TODO: find exact build file for this project
-        val file = githubapi.FileInfo("build.sbt")
+        val buildFile = workspaceOpt match {
+          case None => "build.sbt"
+          case Some(workspace) =>
+            if (root.startsWith(workspace)) workspace.relativize(root).resolve("build.sbt").toString
+            else root.resolve("build.sbt").toString
+        }
+        val file = githubapi.FileInfo(buildFile)
         val metadata = Map("baseDirectory" -> JString(baseDirectory.toString))
         val manifest = githubapi.Manifest(projectModuleRef, file, metadata, resolved.toMap)
+        logger.info(s"Created manifest of $buildFile")
         Some(manifest)
     }
   }

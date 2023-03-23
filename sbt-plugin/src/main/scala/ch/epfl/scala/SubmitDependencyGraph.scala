@@ -1,6 +1,8 @@
 package ch.epfl.scala
 
 import java.nio.charset.StandardCharsets
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.time.Instant
 
 import scala.concurrent.Await
@@ -8,6 +10,7 @@ import scala.concurrent.duration.Duration
 import scala.util.Properties
 import scala.util.Try
 
+import ch.epfl.scala.GithubDependencyGraphPlugin.autoImport
 import ch.epfl.scala.GithubDependencyGraphPlugin.autoImport._
 import ch.epfl.scala.JsonProtocol._
 import ch.epfl.scala.githubapi.JsonProtocol._
@@ -58,6 +61,7 @@ object SubmitDependencyGraph {
 
     val initState = state
       .put(githubSubmitInputKey, input)
+      .put(autoImport.githubWorkspace, githubWorkspace())
       .put(githubManifestsKey, Map.empty[String, Manifest])
       .put(githubProjectsKey, projectRefs)
 
@@ -137,6 +141,7 @@ object SubmitDependencyGraph {
   }
 
   private def checkGithubEnv(): Unit = {
+    githubWorkspace()
     githubWorkflow()
     githubJobName()
     githubRunId()
@@ -147,6 +152,7 @@ object SubmitDependencyGraph {
     githubToken()
   }
 
+  private def githubWorkspace(): Path = Paths.get(githubCIEnv("GITHUB_WORKSPACE")).toAbsolutePath
   private def githubWorkflow(): String = githubCIEnv("GITHUB_WORKFLOW")
   private def githubJobName(): String = githubCIEnv("GITHUB_JOB")
   private def githubRunId(): String = githubCIEnv("GITHUB_RUN_ID")
