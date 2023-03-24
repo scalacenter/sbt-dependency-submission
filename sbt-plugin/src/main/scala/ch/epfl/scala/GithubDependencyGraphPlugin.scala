@@ -1,6 +1,5 @@
 package ch.epfl.scala
 
-import java.nio.file.Path
 import java.nio.file.Paths
 
 import scala.collection.mutable
@@ -29,7 +28,7 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
 
   object autoImport {
     val githubSubmitInputKey: AttributeKey[SubmitInput] = AttributeKey("githubSubmitInput")
-    val githubWorkspace: AttributeKey[Path] = AttributeKey("githubWorkspace")
+    val githubBuildFile: AttributeKey[githubapi.FileInfo] = AttributeKey("githubBuildFile")
     val githubManifestsKey: AttributeKey[Map[String, githubapi.Manifest]] = AttributeKey("githubDependencyManifests")
     val githubProjectsKey: AttributeKey[Seq[ProjectRef]] = AttributeKey("githubProjectRefs")
     val githubDependencyManifest: TaskKey[Option[githubapi.Manifest]] = taskKey(
@@ -120,7 +119,7 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
     val state = Keys.state.value
 
     val inputOpt = state.get(githubSubmitInputKey)
-    val workspaceOpt = state.get(githubWorkspace)
+    val buildFileOpt = state.get(githubBuildFile)
 
     val onResolveFailure = inputOpt.flatMap(_.onResolveFailure)
     val ignoredConfigs = inputOpt.toSeq.flatMap(_.ignoredConfigs).toSet
@@ -191,16 +190,8 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
             }
 
         val projectModuleRef = getReference(projectID)
-        val buildFile = workspaceOpt match {
-          case None => "build.sbt"
-          case Some(workspace) =>
-            if (root.startsWith(workspace)) workspace.relativize(root).resolve("build.sbt").toString
-            else root.resolve("build.sbt").toString
-        }
-        val file = githubapi.FileInfo(buildFile)
         val metadata = Map("baseDirectory" -> JString(baseDirectory.toString))
-        val manifest = githubapi.Manifest(projectModuleRef, file, metadata, resolved.toMap)
-        logger.info(s"Created manifest of $buildFile")
+        val manifest = githubapi.Manifest(projectModuleRef, buildFileOpt, metadata, resolved.toMap)
         Some(manifest)
     }
   }
