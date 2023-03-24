@@ -65,5 +65,6 @@ jobs:
       uses: ./
       with:
         working-directory: sbt-plugin
+        sbt-plugin-version: 2.2.0-SNAPSHOT
 
         
