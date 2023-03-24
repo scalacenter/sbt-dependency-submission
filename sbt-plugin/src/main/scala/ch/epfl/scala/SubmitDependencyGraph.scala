@@ -1,7 +1,6 @@
 package ch.epfl.scala
 
 import java.nio.charset.StandardCharsets
-import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.Instant
 
@@ -10,7 +9,6 @@ import scala.concurrent.duration.Duration
 import scala.util.Properties
 import scala.util.Try
 
-import ch.epfl.scala.GithubDependencyGraphPlugin.autoImport
 import ch.epfl.scala.GithubDependencyGraphPlugin.autoImport._
 import ch.epfl.scala.JsonProtocol._
 import ch.epfl.scala.githubapi.JsonProtocol._
@@ -59,9 +57,16 @@ object SubmitDependencyGraph {
       .flatMap(projectRef => state.setting(projectRef / Keys.crossScalaVersions))
       .distinct
 
+    val root = Paths.get(loadedBuild.root).toAbsolutePath
+    val workspace = Paths.get(githubWorkspace()).toAbsolutePath
+    val buildFile =
+      if (root.startsWith(workspace)) workspace.relativize(root).resolve("build.sbt")
+      else root.resolve("build.sbt")
+    state.log.info(s"Resolving snapshot of $buildFile")
+
     val initState = state
       .put(githubSubmitInputKey, input)
-      .put(autoImport.githubWorkspace, githubWorkspace())
+      .put(githubBuildFile, githubapi.FileInfo(buildFile.toString))
       .put(githubManifestsKey, Map.empty[String, Manifest])
       .put(githubProjectsKey, projectRefs)
 
@@ -85,7 +90,7 @@ object SubmitDependencyGraph {
         "Authorization" -> s"token ${githubToken()}"
       )
 
-    state.log.info(s"Submiting dependency snapshot to $snapshotUrl")
+    state.log.info(s"Submiting dependency snapshot of job ${snapshot.job} to $snapshotUrl")
     val result = for {
       httpResp <- Try(Await.result(http.processFull(request), Duration.Inf))
       snapshot <- getSnapshot(httpResp)
@@ -130,11 +135,11 @@ object SubmitDependencyGraph {
   }
 
   private def githubJob(): Job = {
-    val correlator = s"${githubJobName()}_${githubWorkflow()}"
+    val correlator = s"${githubWorkflow()}_${githubJobName()}_${githubAction()}"
     val id = githubRunId
     val html_url =
       for {
-        serverUrl <- Properties.envOrNone("$GITHUB_SERVER_URL")
+        serverUrl <- Properties.envOrNone("GITHUB_SERVER_URL")
         repository <- Properties.envOrNone("GITHUB_REPOSITORY")
       } yield s"$serverUrl/$repository/actions/runs/$id"
     Job(correlator, id, html_url)
@@ -144,6 +149,7 @@ object SubmitDependencyGraph {
     githubWorkspace()
     githubWorkflow()
     githubJobName()
+    githubAction()
     githubRunId()
     githubSha()
     githubRef()
@@ -152,9 +158,10 @@ object SubmitDependencyGraph {
     githubToken()
   }
 
-  private def githubWorkspace(): Path = Paths.get(githubCIEnv("GITHUB_WORKSPACE")).toAbsolutePath
+  private def githubWorkspace(): String = githubCIEnv("GITHUB_WORKSPACE")
   private def githubWorkflow(): String = githubCIEnv("GITHUB_WORKFLOW")
   private def githubJobName(): String = githubCIEnv("GITHUB_JOB")
+  private def githubAction(): String = githubCIEnv("GITHUB_ACTION")
   private def githubRunId(): String = githubCIEnv("GITHUB_RUN_ID")
   private def githubSha(): String = githubCIEnv("GITHUB_SHA")
   private def githubRef(): String = githubCIEnv("GITHUB_REF")
