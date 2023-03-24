@@ -6,9 +6,6 @@ import * as fs from 'fs'
 import * as fsPromises from 'fs/promises'
 import * as path from 'path'
 
-// Version of the sbt-github-dependency-submission plugin
-const pluginVersion = '2.1.0'
-
 async function run(): Promise<void> {
   try {
     const token = core.getInput('token')
@@ -25,6 +22,7 @@ async function run(): Promise<void> {
     const uuid = crypto.randomUUID()
     const pluginFile = path.join(projectDir, `github-dependency-submission-${uuid}.sbt`)
 
+    const pluginVersion = core.getInput('sbt-plugin-version')
     const pluginDep = `addSbtPlugin("ch.epfl.scala" % "sbt-github-dependency-submission" % "${pluginVersion}")`
     await fsPromises.writeFile(pluginFile, pluginDep)
     // check that sbt is installed

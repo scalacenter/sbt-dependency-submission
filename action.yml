@@ -33,6 +33,10 @@ inputs:
     description: GitHub Personal Access Token (PAT). Defaults to PAT provided by Action runner.
     required: false
     default: ${{ github.token }}
+  sbt-plugin-version:
+    description: Version of the sbt plugin to use.
+    required: false
+    default: '2.1.0'
 runs:
   using: 'node16'
   main: 'dist/index.js'
