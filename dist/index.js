@@ -46,8 +46,6 @@ const crypto = __importStar(__nccwpck_require__(113));
 const fs = __importStar(__nccwpck_require__(147));
 const fsPromises = __importStar(__nccwpck_require__(292));
 const path = __importStar(__nccwpck_require__(17));
-// Version of the sbt-github-dependency-submission plugin
-const pluginVersion = '2.1.0';
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -62,6 +60,7 @@ function run() {
             }
             const uuid = crypto.randomUUID();
             const pluginFile = path.join(projectDir, `github-dependency-submission-${uuid}.sbt`);
+            const pluginVersion = core.getInput('sbt-plugin-version');
             const pluginDep = `addSbtPlugin("ch.epfl.scala" % "sbt-github-dependency-submission" % "${pluginVersion}")`;
             yield fsPromises.writeFile(pluginFile, pluginDep);
             // check that sbt is installed
