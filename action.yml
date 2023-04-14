@@ -29,6 +29,12 @@ inputs:
       If 'warning', the job will ignore the failing modules and submit the snapshot.
     required: false
     default: error
+  additional-sbt-parameters:
+    description: |
+     Add additional parameters to pass to the sbt command.
+     Can be used for example for repository settings, or parameters needed for your repository.
+    required: false
+    default: ''
   token:
     description: GitHub Personal Access Token (PAT). Defaults to PAT provided by Action runner.
     required: false

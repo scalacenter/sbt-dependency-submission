@@ -38,6 +38,13 @@ async function run(): Promise<void> {
       .split(' ')
       .filter(value => value.length > 0)
 
+    const additionalSbtParameters = core
+      .getInput('additional-sbt-parameters')
+      .split(' ')
+      .filter(value => value.length > 0)
+
+    const sbtCommand = ['sbt'].concat(additionalSbtParameters).join(' ')
+
     const onResolveFailure = core.getInput('on-resolve-failure')
     if (!['error', 'warning'].includes(onResolveFailure)) {
       core.setFailed(
@@ -49,7 +56,7 @@ async function run(): Promise<void> {
     const input = { ignoredModules, ignoredConfigs, onResolveFailure }
 
     process.env['GITHUB_TOKEN'] = token
-    await cli.exec('sbt', [`githubSubmitDependencyGraph ${JSON.stringify(input)}`], {
+    await cli.exec(sbtCommand, [`githubSubmitDependencyGraph ${JSON.stringify(input)}`], {
       cwd: workingDir,
     })
   } catch (error) {

@@ -57,6 +57,12 @@ GitHub Personal Access Token (PAT). Defaults to PAT provided by Action runner.
 
 Example: `${{ secrets.USER_TOKEN }}`
 
+#### - `additional-sbt-parameters`
+
+Additional parameters to be able to be past to sbt. Defaults to nothing.
+
+Example - `-DsuperCoolRepository.user=${{env.someUsername}} -DsettingYouNeed=ValueYouNeed`
+
 #### Example
 
 ##### Excluding some projects or some Scala versions from the dependency submission.
@@ -89,6 +95,22 @@ steps:
     with:
       working-directory: ./my-scala-project
       configs-ignore: scala-doc-tool
+```
+
+#### Passing additional sbt parameters.
+
+In this example you are passing some specific parameters to sbt.
+
+```yaml
+
+## in .github/workflows/dependency-graph.md
+...
+steps:
+  - uses: actions/checkout@v3
+  - uses: scalacenter/sbt-dependency-submission@v2
+    with:
+      working-directory: ./my-scala-project
+      additional-sbt-parameters: -DsomeRepository.user=programmerman -DsomeNeededSetting=cool
 ```
 
 ## Troubleshooting
