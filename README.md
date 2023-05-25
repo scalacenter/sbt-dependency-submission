@@ -9,7 +9,7 @@ Enable [Dependabot](https://docs.github.com/en/code-security/supply-chain-securi
 
 ## Support
 
-Any sbt project whose sbt version is equal to or greater than 1.3.
+Any sbt project whose sbt version is equal to or greater than 1.5.
 
 ## Usage
 
