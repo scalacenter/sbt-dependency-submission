@@ -83,7 +83,7 @@ object SubmitDependencyGraph {
 
     val snapshotJson = CompactPrinter(Converter.toJsonUnsafe(snapshot))
 
-    val snapshotJsonFile = IO.withTemporaryFile("dependency-snapshot-", ".json") { file =>
+    val snapshotJsonFile = IO.withTemporaryFile("dependency-snapshot-", ".json", keepFile = true) { file =>
       IO.write(file, snapshotJson)
       state.log.info(s"Dependency snapshot written to ${file.getAbsolutePath}")
       file
