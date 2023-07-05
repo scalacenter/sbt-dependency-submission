@@ -37,6 +37,13 @@ inputs:
     description: Version of the sbt plugin to use.
     required: false
     default: '2.1.2'
+outputs:
+  submission-id:
+    description: The ID of the submission created by the action
+  submission-api-url:
+    description: The URL of the submission created by the action
+  snapshot-json-path:
+    description: The path of the snapshot JSON file created by the action
 runs:
   using: 'node16'
   main: 'dist/index.js'

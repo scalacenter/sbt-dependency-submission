@@ -57,6 +57,20 @@ GitHub Personal Access Token (PAT). Defaults to PAT provided by Action runner.
 
 Example: `${{ secrets.USER_TOKEN }}`
 
+### Outputs
+
+#### `submission-id`
+
+Once the snapshot of the dependencies has been submitted, GitHub responds with an ID of this snapshot.
+
+#### `submission-api-url`
+
+The API URL of the submission created by the action. It can be queried to get the submitted snapshot.
+
+#### `snapshot-json-path`
+
+Path to the temporary JSON file with the dependency snapshot that has been submitted.
+
 #### Example
 
 ##### Excluding some projects or some Scala versions from the dependency submission.
@@ -133,7 +147,3 @@ permissions:
 ### sbt.librarymanagement.ResolveException: Error downloading
 
 This error may happen when you try to access artifacts from private GitHub packages with the default GitHub token. You need to pass personal access token which is allowed to access private packages in the `token` input.
-
-
-
-

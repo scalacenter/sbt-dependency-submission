@@ -63,8 +63,17 @@ jobs:
     - run: npm run all
     - name: Run sbt-dependency-submission
       uses: ./
+      id: dependency-submission
       with:
         working-directory: sbt-plugin
         sbt-plugin-version: 2.2.0-SNAPSHOT
+    - name: Check outputs
+      run: |
+        echo ${{ steps.dependency-submission.outputs.submission-id }}
+        echo ${{ steps.dependency-submission.outputs.submission-api-url }}
+        echo ${{ steps.dependency-submission.outputs.snapshot-json-path }}
+    - name: Log snapshot JSON
+      run: |
+        cat ${{ steps.dependency-submission.outputs.snapshot-json-path }} | jq
 
         
