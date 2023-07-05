@@ -82,6 +82,13 @@ object SubmitDependencyGraph {
     val snapshotUrl = s"${githubApiUrl()}/repos/${githubRepository()}/dependency-graph/snapshots"
 
     val snapshotJson = CompactPrinter(Converter.toJsonUnsafe(snapshot))
+
+    val snapshotJsonFile = IO.withTemporaryFile("dependency-snapshot-", ".json") { file =>
+      IO.write(file, snapshotJson)
+      state.log.info(s"Dependency snapshot written to ${file.getAbsolutePath}")
+      file
+    }
+
     val request = Gigahorse
       .url(snapshotUrl)
       .post(snapshotJson, StandardCharsets.UTF_8)
@@ -98,7 +105,8 @@ object SubmitDependencyGraph {
       state.log.info(s"Submitted successfully as $snapshotUrl/${snapshot.id}")
       setGithubOutputs(
         "submission-id" -> s"${snapshot.id}",
-        "submission-api-url" -> s"${snapshotUrl}/${snapshot.id}"
+        "submission-api-url" -> s"${snapshotUrl}/${snapshot.id}",
+        "snapshot-json-path" -> snapshotJsonFile.getAbsolutePath
       )
       state
     }
