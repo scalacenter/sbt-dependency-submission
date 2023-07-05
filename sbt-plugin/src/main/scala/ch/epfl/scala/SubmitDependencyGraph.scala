@@ -96,11 +96,22 @@ object SubmitDependencyGraph {
       snapshot <- getSnapshot(httpResp)
     } yield {
       state.log.info(s"Submitted successfully as $snapshotUrl/${snapshot.id}")
+      setGithubOutputs(
+        "submission-id" -> s"${snapshot.id}",
+        "submission-api-url" -> s"${snapshotUrl}/${snapshot.id}"
+      )
       state
     }
 
     result.get
   }
+
+  // https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-output-parameter
+  private def setGithubOutputs(outputs: (String, String)*): Unit = IO.writeLines(
+    file(githubOutput),
+    outputs.toSeq.map { case (name, value) => s"${name}=${value}" },
+    append = true
+  )
 
   private def getSnapshot(httpResp: FullResponse): Try[SnapshotResponse] =
     httpResp.status match {
@@ -168,6 +179,7 @@ object SubmitDependencyGraph {
   private def githubApiUrl(): String = githubCIEnv("GITHUB_API_URL")
   private def githubRepository(): String = githubCIEnv("GITHUB_REPOSITORY")
   private def githubToken(): String = githubCIEnv("GITHUB_TOKEN")
+  private def githubOutput(): String = githubCIEnv("GITHUB_OUTPUT")
 
   private def githubCIEnv(name: String): String =
     Properties.envOrNone(name).getOrElse {
