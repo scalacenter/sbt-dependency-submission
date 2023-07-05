@@ -67,6 +67,10 @@ Once the snapshot of the dependencies has been submitted, GitHub responds with a
 
 The API URL of the submission created by the action. It can be queried to get the submitted snapshot.
 
+#### `snapshot-json-path`
+
+Path to the temporary JSON file with the dependency snapshot that has been submitted.
+
 #### Example
 
 ##### Excluding some projects or some Scala versions from the dependency submission.
