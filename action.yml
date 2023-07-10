@@ -36,7 +36,7 @@ inputs:
   sbt-plugin-version:
     description: Version of the sbt plugin to use.
     required: false
-    default: '2.1.2'
+    default: '2.2.0'
 outputs:
   submission-id:
     description: The ID of the submission created by the action
