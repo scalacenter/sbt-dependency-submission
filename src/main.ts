@@ -49,7 +49,7 @@ async function run(): Promise<void> {
     const input = { ignoredModules, ignoredConfigs, onResolveFailure }
 
     process.env['GITHUB_TOKEN'] = token
-    await cli.exec('sbt', [`githubSubmitDependencyGraph ${JSON.stringify(input)}`], {
+    await cli.exec('sbt', ['--batch', `githubSubmitDependencyGraph ${JSON.stringify(input)}`], {
       cwd: workingDir,
     })
   } catch (error) {
