@@ -1,10 +1,12 @@
 import * as cli from '@actions/exec'
 import * as core from '@actions/core'
 import * as io from '@actions/io'
+import * as github from '@actions/github'
 import * as crypto from 'crypto'
 import * as fs from 'fs'
 import * as fsPromises from 'fs/promises'
 import * as path from 'path'
+import type { PullRequestEvent } from '@octokit/webhooks-types'
 
 async function run(): Promise<void> {
   try {
@@ -47,6 +49,13 @@ async function run(): Promise<void> {
     }
 
     const input = { ignoredModules, ignoredConfigs, onResolveFailure }
+
+    if (github.context.eventName === 'pull_request') {
+      core.info('pull request, resetting sha')
+      const payload = github.context.payload as PullRequestEvent
+      core.info(`setting sha to: ${payload.pull_request.head.sha}`)
+      process.env['GITHUB_SHA'] = payload.pull_request.head.sha
+    }
 
     process.env['GITHUB_TOKEN'] = token
     await cli.exec('sbt', ['--batch', `githubSubmitDependencyGraph ${JSON.stringify(input)}`], {
