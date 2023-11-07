@@ -76,4 +76,15 @@ jobs:
       run: |
         cat ${{ steps.dependency-submission.outputs.snapshot-json-path }} | jq
 
-        
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write # for comment-summary-in-pr
+    needs: test-action
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v3
+        with:
+          comment-summary-in-pr: always
