@@ -15,7 +15,8 @@ import ch.epfl.scala.githubapi.JsonProtocol._
 import ch.epfl.scala.githubapi._
 import gigahorse.FullResponse
 import gigahorse.HttpClient
-import gigahorse.support.apachehttp.Gigahorse
+
+import gigahorse.support.asynchttpclient.Gigahorse
 import sbt._
 import sbt.internal.util.complete._
 import sjsonnew.shaded.scalajson.ast.unsafe.JValue

@@ -41,7 +41,7 @@ val `sbt-github-dependency-submission` = project
       "-Ywarn-unused-import"
     ),
     libraryDependencies ++= Seq(
-      "com.eed3si9n" %% "gigahorse-apache-http" % "0.7.0",
+      "com.eed3si9n" %% "gigahorse-asynchttpclient" % "0.7.0",
       "org.scalameta" %% "munit" % "0.7.29" % Test
     ),
     buildInfoKeys := Seq[BuildInfoKey](name, version, homepage),
