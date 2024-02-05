@@ -42,6 +42,7 @@ jobs:
       with:
         jvm: ${{ matrix.jvm }}
         apps: sbt
+    - run: echo "${{ toJSON(github.event.pull_request) }}"
     - run: sbt test
     - run: sbt "scripted dependency-manifest/*"
     - run: sbt "scripted submit-snapshot/*"
