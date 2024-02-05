@@ -43,9 +43,12 @@ jobs:
         jvm: ${{ matrix.jvm }}
         apps: sbt
     - run: sbt test
-    - run: sbt scripted
+    - run: sbt "scripted dependency-manifest/*"
+    - run: sbt "scripted submit-snapshot/*"
+      if: github.actor == 'scalacenter'
   
   test-action:
+    if: github.actor == 'scalacenter'
     strategy:
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
