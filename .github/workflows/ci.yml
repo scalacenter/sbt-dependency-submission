@@ -43,9 +43,12 @@ jobs:
         jvm: ${{ matrix.jvm }}
         apps: sbt
     - run: sbt test
-    - run: sbt scripted
+    - run: sbt "scripted dependency-manifest/*"
+    - run: sbt "scripted submit-snapshot/*"
+      if: github.event_name == 'push' || github.event.pull_request.head.repo.owner.login == 'scalacenter'
   
   test-action:
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.owner.login == 'scalacenter'
     strategy:
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
