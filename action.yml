@@ -45,5 +45,5 @@ outputs:
   snapshot-json-path:
     description: The path of the snapshot JSON file created by the action
 runs:
-  using: 'node16'
+  using: 'node20'
   main: 'dist/index.js'
