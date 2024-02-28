@@ -117,6 +117,8 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
     val baseDirectory = Keys.baseDirectory.value
     val logger = Keys.streams.value.log
     val state = Keys.state.value
+    val thisProject = Keys.thisProject.value
+    val internalConfigurationMap = Keys.internalConfigurationMap.value
 
     val inputOpt = state.get(githubSubmitInputKey)
     val buildFileOpt = state.get(githubBuildFile)
@@ -125,6 +127,13 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
     val ignoredConfigs = inputOpt.toSeq.flatMap(_.ignoredConfigs).toSet
     val moduleName = crossVersion(projectID).name
 
+    // a reverse view of internalConfigurationMap (internal-test -> test)
+    val reverseConfigurationMap =
+      thisProject.configurations
+        .map(c => internalConfigurationMap(c).name -> c.name)
+        .filter { case (internal, c) => internal != c }
+        .toMap
+
     def getReference(module: ModuleID): String =
       crossVersion(module)
         .withConfigurations(None)
@@ -132,7 +141,10 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
         .toString
 
     def includeConfig(config: ConfigRef): Boolean =
-      if (ignoredConfigs.contains(config.name)) {
+      // if ignoredConfigs contain 'test' we should also ignore 'test-internal'
+      if (
+        ignoredConfigs.contains(config.name) || reverseConfigurationMap.get(config.name).exists(ignoredConfigs.contains)
+      ) {
         logger.info(s"Excluding config ${config.name} of ${moduleName} from its dependency graph")
         false
       } else true
