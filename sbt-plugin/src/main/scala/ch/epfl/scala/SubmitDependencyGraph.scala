@@ -79,7 +79,10 @@ object SubmitDependencyGraph {
     val storeAllManifests = scalaVersions.flatMap { scalaVersion =>
       Seq(s"++$scalaVersion", s"Global/${githubStoreDependencyManifests.key} $scalaVersion")
     }
-    val commands = storeAllManifests :+ { if (local) { SubmitInternalLocal } else { SubmitInternal } }
+    val commands = storeAllManifests :+ {
+      if (local) { SubmitInternalLocal }
+      else { SubmitInternal }
+    }
     commands.toList ::: initState
   }
 
@@ -104,24 +107,24 @@ object SubmitDependencyGraph {
           "Content-Type" -> "application/json",
           "Authorization" -> s"token ${githubToken()}"
         )
-        state.log.info(s"Submiting dependency snapshot of job ${snapshot.job} to $snapshotUrl")
-        val result = for {
-          httpResp <- Try(Await.result(http.processFull(request), Duration.Inf))
-          snapshot <- getSnapshot(httpResp)
-          } yield {
-            state.log.info(s"Submitted successfully as $snapshotUrl/${snapshot.id}")
-            setGithubOutputs(
-              "submission-id" -> s"${snapshot.id}",
-              "submission-api-url" -> s"${snapshotUrl}/${snapshot.id}",
-              "snapshot-json-path" -> snapshotJsonFile.getAbsolutePath
-            )
-            state
-          }
-          result.get
-      } else {
-        state.log.info(s"Local mode: skipping submission")
+      state.log.info(s"Submiting dependency snapshot of job ${snapshot.job} to $snapshotUrl")
+      val result = for {
+        httpResp <- Try(Await.result(http.processFull(request), Duration.Inf))
+        snapshot <- getSnapshot(httpResp)
+      } yield {
+        state.log.info(s"Submitted successfully as $snapshotUrl/${snapshot.id}")
+        setGithubOutputs(
+          "submission-id" -> s"${snapshot.id}",
+          "submission-api-url" -> s"${snapshotUrl}/${snapshot.id}",
+          "snapshot-json-path" -> snapshotJsonFile.getAbsolutePath
+        )
         state
       }
+      result.get
+    } else {
+      state.log.info(s"Local mode: skipping submission")
+      state
+    }
 
   }
 
@@ -200,7 +203,7 @@ object SubmitDependencyGraph {
   private def githubToken(local: Boolean = false): String = githubCIEnv("GITHUB_TOKEN", local)
   private def githubOutput(local: Boolean = false): String = githubCIEnv("GITHUB_OUTPUT", local)
 
-  private def githubCIEnv(name: String, local : Boolean = false): String =
+  private def githubCIEnv(name: String, local: Boolean = false): String =
     Properties.envOrNone(name).getOrElse {
       if (local) ""
       else throw new MessageOnlyException(s"Missing environment variable $name. This task must run in a Github Action.")
