@@ -97,21 +97,26 @@ object SubmitDependencyGraph {
         "Authorization" -> s"token ${githubToken()}"
       )
 
-    state.log.info(s"Submiting dependency snapshot of job ${snapshot.job} to $snapshotUrl")
-    val result = for {
-      httpResp <- Try(Await.result(http.processFull(request), Duration.Inf))
-      snapshot <- getSnapshot(httpResp)
-    } yield {
-      state.log.info(s"Submitted successfully as $snapshotUrl/${snapshot.id}")
-      setGithubOutputs(
-        "submission-id" -> s"${snapshot.id}",
-        "submission-api-url" -> s"${snapshotUrl}/${snapshot.id}",
-        "snapshot-json-path" -> snapshotJsonFile.getAbsolutePath
-      )
-      state
-    }
+      if (!localMode()) {
+        state.log.info(s"Submiting dependency snapshot of job ${snapshot.job} to $snapshotUrl")
+        val result = for {
+          httpResp <- Try(Await.result(http.processFull(request), Duration.Inf))
+          snapshot <- getSnapshot(httpResp)
+          } yield {
+            state.log.info(s"Submitted successfully as $snapshotUrl/${snapshot.id}")
+            setGithubOutputs(
+              "submission-id" -> s"${snapshot.id}",
+              "submission-api-url" -> s"${snapshotUrl}/${snapshot.id}",
+              "snapshot-json-path" -> snapshotJsonFile.getAbsolutePath
+            )
+            state
+          }
+          result.get
+      } else {
+        state.log.info(s"Local mode: skipping submission")
+        state
+      }
 
-    result.get
   }
 
   // https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-output-parameter
@@ -177,6 +182,7 @@ object SubmitDependencyGraph {
     githubToken()
   }
 
+  private def localMode(): Boolean = Properties.envOrNone("GITHUB_DEPENDENCY_SUBMISSION_LOCAL_MODE").isDefined
   private def githubWorkspace(): String = githubCIEnv("GITHUB_WORKSPACE")
   private def githubWorkflow(): String = githubCIEnv("GITHUB_WORKFLOW")
   private def githubJobName(): String = githubCIEnv("GITHUB_JOB")
@@ -191,6 +197,9 @@ object SubmitDependencyGraph {
 
   private def githubCIEnv(name: String): String =
     Properties.envOrNone(name).getOrElse {
-      throw new MessageOnlyException(s"Missing environment variable $name. This task must run in a Github Action.")
+      if (localMode())
+        ""
+      else
+       throw new MessageOnlyException(s"Missing environment variable $name. This task must run in a Github Action.")
     }
 }

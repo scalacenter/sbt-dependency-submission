@@ -25,7 +25,6 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
       Configurations.System
     )
       .map(_.toConfigRef)
-
   object autoImport {
     val githubSubmitInputKey: AttributeKey[SubmitInput] = AttributeKey("githubSubmitInput")
     val githubBuildFile: AttributeKey[githubapi.FileInfo] = AttributeKey("githubBuildFile")
@@ -220,6 +219,7 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
 
   private def githubCIEnv(name: String): String =
     Properties.envOrNone(name).getOrElse {
-      throw new MessageOnlyException(s"Missing environment variable $name. This task must run in a Github Action.")
+      ""
+      // throw new MessageOnlyException(s"Missing environment variable $name. This task must run in a Github Action.")
     }
 }
