@@ -23,22 +23,29 @@ import sjsonnew.support.scalajson.unsafe.{Parser => JsonParser, _}
 
 object SubmitDependencyGraph {
   val Submit = "githubSubmitDependencyGraph"
-  val Generate = "generateDependencyGraph"
-  val usage: String = s"""$Submit {"projects":[], "scalaVersions":[]}"""
   val brief = "Submit the dependency graph to Github Dependency API."
   val detail = "Submit the dependency graph of a set of projects and scala versions to Github Dependency API"
+  val Generate = "generateDependencyGraph"
   val briefGenerate = "Generate the dependency graph"
   val detailGenerate = "Generate the dependency graph of a set of projects and scala versions"
+  val commands = new SubmitDependencyGraph(true, Generate, briefGenerate, detailGenerate).commands ++
+    new SubmitDependencyGraph(false, Submit, brief, detail).commands
+}
 
-  val SubmitInternal: String = s"${Submit}Internal"
-  val SubmitInternalLocal: String = s"${Submit}InternalLocal"
+class SubmitDependencyGraph(
+    val local: Boolean,
+    val command: String,
+    val brief: String,
+    val detail: String
+) {
+  val usage: String = s"""$command {"projects":[], "scalaVersions":[]}"""
+
+  val internalCommand = s"${command}Internal"
   val internalOnly = "internal usage only"
 
   val commands: Seq[Command] = Seq(
-    Command(Submit, (usage, brief), detail)(inputParser)(submit(false)),
-    Command(Generate, (usage, briefGenerate), detailGenerate)(inputParser)(submit(true)),
-    Command.command(SubmitInternal, internalOnly, internalOnly)(submitInternal(false)),
-    Command.command(SubmitInternalLocal, internalOnly, internalOnly)(submitInternal(true))
+    Command(command, (usage, brief), detail)(inputParser)(submit),
+    Command.command(internalCommand, internalOnly, internalOnly)(submitInternal)
   )
 
   private lazy val http: HttpClient = Gigahorse.http(Gigahorse.config)
@@ -51,8 +58,8 @@ object SubmitDependencyGraph {
         .get
     }.failOnException
 
-  private def submit(local: Boolean)(state: State, input: SubmitInput): State = {
-    checkGithubEnv(local) // fail fast if the Github CI environment is incomplete
+  private def submit(state: State, input: SubmitInput): State = {
+    checkGithubEnv() // fail fast if the Github CI environment is incomplete
     val loadedBuild = state.setting(Keys.loadedBuild)
     // all project refs that have a Scala version
     val projectRefs = loadedBuild.allProjectRefs
@@ -64,7 +71,7 @@ object SubmitDependencyGraph {
       .distinct
 
     val root = Paths.get(loadedBuild.root).toAbsolutePath
-    val workspace = Paths.get(githubWorkspace(local)).toAbsolutePath
+    val workspace = Paths.get(githubWorkspace()).toAbsolutePath
     val buildFile =
       if (root.startsWith(workspace)) workspace.relativize(root).resolve("build.sbt")
       else root.resolve("build.sbt")
@@ -79,16 +86,13 @@ object SubmitDependencyGraph {
     val storeAllManifests = scalaVersions.flatMap { scalaVersion =>
       Seq(s"++$scalaVersion", s"Global/${githubStoreDependencyManifests.key} $scalaVersion")
     }
-    val commands = storeAllManifests :+ {
-      if (local) { SubmitInternalLocal }
-      else { SubmitInternal }
-    }
+    val commands = storeAllManifests :+ internalCommand
     commands.toList ::: initState
   }
 
-  private def submitInternal(local: Boolean)(state: State): State = {
-    val snapshot = githubDependencySnapshot(local)(state)
-    val snapshotUrl = s"${githubApiUrl(local)}/repos/${githubRepository(local)}/dependency-graph/snapshots"
+  private def submitInternal(state: State): State = {
+    val snapshot = githubDependencySnapshot(state)
+    val snapshotUrl = s"${githubApiUrl()}/repos/${githubRepository()}/dependency-graph/snapshots"
 
     val snapshotJson = CompactPrinter(Converter.toJsonUnsafe(snapshot))
 
@@ -98,7 +102,8 @@ object SubmitDependencyGraph {
       file
     }
 
-    if (!local) {
+    if (local) state
+    else {
 
       val request = Gigahorse
         .url(snapshotUrl)
@@ -107,6 +112,7 @@ object SubmitDependencyGraph {
           "Content-Type" -> "application/json",
           "Authorization" -> s"token ${githubToken()}"
         )
+
       state.log.info(s"Submiting dependency snapshot of job ${snapshot.job} to $snapshotUrl")
       val result = for {
         httpResp <- Try(Await.result(http.processFull(request), Duration.Inf))
@@ -120,17 +126,14 @@ object SubmitDependencyGraph {
         )
         state
       }
-      result.get
-    } else {
-      state.log.info(s"Local mode: skipping submission")
-      state
-    }
 
+      result.get
+    }
   }
 
   // https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-output-parameter
   private def setGithubOutputs(outputs: (String, String)*): Unit = IO.writeLines(
-    file(githubOutput(false)),
+    file(githubOutput),
     outputs.toSeq.map { case (name, value) => s"${name}=${value}" },
     append = true
   )
@@ -147,7 +150,7 @@ object SubmitDependencyGraph {
         throw new MessageOnlyException(message)
     }
 
-  private def githubDependencySnapshot(local: Boolean)(state: State): DependencySnapshot = {
+  private def githubDependencySnapshot(state: State): DependencySnapshot = {
     val detector = DetectorMetadata(
       SbtGithubDependencySubmission.name,
       SbtGithubDependencySubmission.homepage.map(_.toString).getOrElse(""),
@@ -157,9 +160,9 @@ object SubmitDependencyGraph {
     val manifests = state.get(githubManifestsKey).get
     DependencySnapshot(
       0,
-      githubJob(local),
-      githubSha(local),
-      githubRef(local),
+      githubJob(),
+      githubSha(),
+      githubRef(),
       detector,
       Map.empty[String, JValue],
       manifests,
@@ -167,9 +170,9 @@ object SubmitDependencyGraph {
     )
   }
 
-  private def githubJob(local: Boolean): Job = {
-    val correlator = s"${githubWorkflow(local)}_${githubJobName(local)}_${githubAction(local)}"
-    val id = githubRunId(local)
+  private def githubJob(): Job = {
+    val correlator = s"${githubWorkflow()}_${githubJobName()}_${githubAction()}"
+    val id = githubRunId
     val html_url =
       for {
         serverUrl <- Properties.envOrNone("GITHUB_SERVER_URL")
@@ -178,34 +181,33 @@ object SubmitDependencyGraph {
     Job(correlator, id, html_url)
   }
 
-  private def checkGithubEnv(local: Boolean = false): Unit = {
-    githubWorkspace(local)
-    githubWorkflow(local)
-    githubJobName(local)
-    githubAction(local)
-    githubRunId(local)
-    githubSha(local)
-    githubRef(local)
-    githubApiUrl(local)
-    githubRepository(local)
-    githubToken(local)
+  private def checkGithubEnv(): Unit = {
+    githubWorkspace()
+    githubWorkflow()
+    githubJobName()
+    githubAction()
+    githubRunId()
+    githubSha()
+    githubRef()
+    githubApiUrl()
+    githubRepository()
+    githubToken()
   }
 
-  private def githubWorkspace(local: Boolean = false): String = githubCIEnv("GITHUB_WORKSPACE", local)
-  private def githubWorkflow(local: Boolean = false): String = githubCIEnv("GITHUB_WORKFLOW", local)
-  private def githubJobName(local: Boolean = false): String = githubCIEnv("GITHUB_JOB", local)
-  private def githubAction(local: Boolean = false): String = githubCIEnv("GITHUB_ACTION", local)
-  private def githubRunId(local: Boolean = false): String = githubCIEnv("GITHUB_RUN_ID", local)
-  private def githubSha(local: Boolean = false): String = githubCIEnv("GITHUB_SHA", local)
-  private def githubRef(local: Boolean = false): String = githubCIEnv("GITHUB_REF", local)
-  private def githubApiUrl(local: Boolean = false): String = githubCIEnv("GITHUB_API_URL", local)
-  private def githubRepository(local: Boolean = false): String = githubCIEnv("GITHUB_REPOSITORY", local)
-  private def githubToken(local: Boolean = false): String = githubCIEnv("GITHUB_TOKEN", local)
-  private def githubOutput(local: Boolean = false): String = githubCIEnv("GITHUB_OUTPUT", local)
+  private def githubWorkspace(): String = githubCIEnv("GITHUB_WORKSPACE")
+  private def githubWorkflow(): String = githubCIEnv("GITHUB_WORKFLOW")
+  private def githubJobName(): String = githubCIEnv("GITHUB_JOB")
+  private def githubAction(): String = githubCIEnv("GITHUB_ACTION")
+  private def githubRunId(): String = githubCIEnv("GITHUB_RUN_ID")
+  private def githubSha(): String = githubCIEnv("GITHUB_SHA")
+  private def githubRef(): String = githubCIEnv("GITHUB_REF")
+  private def githubApiUrl(): String = githubCIEnv("GITHUB_API_URL")
+  private def githubRepository(): String = githubCIEnv("GITHUB_REPOSITORY")
+  private def githubToken(): String = githubCIEnv("GITHUB_TOKEN")
+  private def githubOutput(): String = githubCIEnv("GITHUB_OUTPUT")
 
-  private def githubCIEnv(name: String, local: Boolean = false): String =
-    Properties.envOrNone(name).getOrElse {
-      if (local) ""
-      else throw new MessageOnlyException(s"Missing environment variable $name. This task must run in a Github Action.")
+  private def githubCIEnv(name: String): String =
+    Properties.envOrNone(name).orElse(Some("").find(_ => local)).getOrElse {
+      throw new MessageOnlyException(s"Missing environment variable $name. This task must run in a Github Action.")
     }
 }
