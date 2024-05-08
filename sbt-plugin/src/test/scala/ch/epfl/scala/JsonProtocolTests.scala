@@ -29,16 +29,16 @@ class JsonProtocolTests extends FunSuite {
   test("decode empty input") {
     import ch.epfl.scala.JsonProtocol._
     val raw = Parser.parseUnsafe("{}")
-    val obtained = Converter.fromJson[SubmitInput](raw).get
-    val expected = SubmitInput(None, Vector.empty, Vector.empty)
+    val obtained = Converter.fromJson[DependencySnapshotInput](raw).get
+    val expected = DependencySnapshotInput(None, Vector.empty, Vector.empty)
     assertEquals(obtained, expected)
   }
 
   test("decode input with onResolveFailure: warning") {
     import ch.epfl.scala.JsonProtocol._
     val raw = Parser.parseUnsafe("""{"onResolveFailure": "warning"}""")
-    val obtained = Converter.fromJson[SubmitInput](raw).get
-    val expected = SubmitInput(Some(OnFailure.warning), Vector.empty, Vector.empty)
+    val obtained = Converter.fromJson[DependencySnapshotInput](raw).get
+    val expected = DependencySnapshotInput(Some(OnFailure.warning), Vector.empty, Vector.empty)
     assertEquals(obtained, expected)
   }
 }

@@ -1,7 +1,7 @@
 import ch.epfl.scala.githubapi.DependencyRelationship
 import ch.epfl.scala.githubapi.DependencyScope
 import ch.epfl.scala.githubapi.Manifest
-import ch.epfl.scala.SubmitInput
+import ch.epfl.scala.DependencySnapshotInput
 import sjsonnew.shaded.scalajson.ast.unsafe.JString
 
 val checkTest = taskKey[Unit]("Check munit_3 is in the manifest ")
@@ -17,8 +17,8 @@ inThisBuild(
 )
 
 Global / ignoreTestConfig := {
-  val input = SubmitInput(None, Vector.empty, ignoredConfigs = Vector("test"))
-  StateTransform(state => state.put(githubSubmitInputKey, input))
+  val input = DependencySnapshotInput(None, Vector.empty, ignoredConfigs = Vector("test"))
+  StateTransform(state => state.put(githubSnapshotInputKey, input))
 }
 
 lazy val p1 = project

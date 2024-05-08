@@ -1,0 +1,5 @@
+-> 'githubGenerateSnapshot {}'
+-> 'Global / githubGenerateSnapshot {"onResolveFailure": "error"}'
+
+> 'githubGenerateSnapshot {"onResolveFailure": "warning"}'
+> Global / checkManifests 1

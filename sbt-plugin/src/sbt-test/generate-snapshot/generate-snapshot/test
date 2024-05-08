@@ -1,0 +1,11 @@
+> 'githubGenerateSnapshot {}'
+> Global / checkManifests 4
+
+> 'githubGenerateSnapshot {"ignoredModules":["a_2.13", "b_2.13"]}'
+> Global / checkManifests 2
+
+> 'githubGenerateSnapshot {"ignoredModules":["a_2.12", "a_2.13", "b_2.13"]}'
+> Global / checkManifests 1
+
+> 'githubGenerateSnapshot {"ignoredModules":[]}'
+> Global / checkManifests 4

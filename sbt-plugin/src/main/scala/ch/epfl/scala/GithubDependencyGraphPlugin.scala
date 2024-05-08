@@ -27,10 +27,12 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
       .map(_.toConfigRef)
 
   object autoImport {
-    val githubSubmitInputKey: AttributeKey[SubmitInput] = AttributeKey("githubSubmitInput")
+    val githubSnapshotInputKey: AttributeKey[DependencySnapshotInput] = AttributeKey("githubSnapshotInput")
     val githubBuildFile: AttributeKey[githubapi.FileInfo] = AttributeKey("githubBuildFile")
     val githubManifestsKey: AttributeKey[Map[String, githubapi.Manifest]] = AttributeKey("githubDependencyManifests")
     val githubProjectsKey: AttributeKey[Seq[ProjectRef]] = AttributeKey("githubProjectRefs")
+    val githubSnapshotFileKey: AttributeKey[File] = AttributeKey("githubSnapshotFile")
+
     val githubDependencyManifest: TaskKey[Option[githubapi.Manifest]] = taskKey(
       "The dependency manifest of the project"
     )
@@ -90,7 +92,7 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
   }
 
   private def includeProject(projectRef: ProjectRef, state: State, logger: Logger): Boolean = {
-    val ignoredModules = state.attributes(githubSubmitInputKey).ignoredModules
+    val ignoredModules = state.attributes(githubSnapshotInputKey).ignoredModules
     val moduleName = getModuleName(projectRef, state)
     val ignored = ignoredModules.contains(moduleName)
     if (!ignored) logger.info(s"Including dependency graph of $moduleName")
@@ -120,7 +122,7 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
     val thisProject = Keys.thisProject.value
     val internalConfigurationMap = Keys.internalConfigurationMap.value
 
-    val inputOpt = state.get(githubSubmitInputKey)
+    val inputOpt = state.get(githubSnapshotInputKey)
     val buildFileOpt = state.get(githubBuildFile)
 
     val onResolveFailure = inputOpt.flatMap(_.onResolveFailure)
@@ -198,7 +200,7 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
                 else DependencyScope.development
               val metadata = Map("config" -> JString(configRef.name))
               val node = DependencyNode(packageUrl, metadata, Some(relationship), Some(scope), dependencies)
-              (moduleRef -> node)
+              moduleRef -> node
             }
 
         val projectModuleRef = getReference(projectID)

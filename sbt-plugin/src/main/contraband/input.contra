@@ -8,8 +8,8 @@ enum OnFailure {
   warning
 }
 
-## Input of the githubSubmitDependencyGraph command
-type SubmitInput {
+## Input of the githubGenerateSnapshot command
+type DependencySnapshotInput {
   onResolveFailure: ch.epfl.scala.OnFailure
 
   ## A set of modules to ignore.

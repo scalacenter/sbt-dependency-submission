@@ -58,7 +58,7 @@ async function run(): Promise<void> {
     }
 
     process.env['GITHUB_TOKEN'] = token
-    await cli.exec('sbt', ['--batch', `githubSubmitDependencyGraph ${JSON.stringify(input)}`], {
+    await cli.exec('sbt', ['--batch', `githubGenerateSnapshot ${JSON.stringify(input)}; githubSubmitSnapshot`], {
       cwd: workingDir,
     })
   } catch (error) {
