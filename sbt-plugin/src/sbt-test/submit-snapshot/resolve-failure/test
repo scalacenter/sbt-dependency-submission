@@ -1,5 +1,0 @@
--> 'githubSubmitDependencyGraph {}'
--> 'Global / githubSubmitDependencyGraph {"onResolveFailure": "error"}'
-
-> 'githubSubmitDependencyGraph {"onResolveFailure": "warning"}'
-> Global / checkManifests 1

@@ -87,7 +87,7 @@ function run() {
                 process.env['GITHUB_SHA'] = payload.pull_request.head.sha;
             }
             process.env['GITHUB_TOKEN'] = token;
-            yield cli.exec('sbt', ['--batch', `githubSubmitDependencyGraph ${JSON.stringify(input)}`], {
+            yield cli.exec('sbt', ['--batch', `githubGenerateSnapshot ${JSON.stringify(input)}; githubSubmitSnapshot`], {
                 cwd: workingDir,
             });
         }
