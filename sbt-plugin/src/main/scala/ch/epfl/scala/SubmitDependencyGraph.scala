@@ -43,10 +43,11 @@ object SubmitDependencyGraph {
     Parsers.any.*.map { raw =>
       val rawString = raw.mkString
       if (rawString.isEmpty) DependencySnapshotInput(None, Vector.empty, Vector.empty)
-      else JsonParser
-        .parseFromString(rawString)
-        .flatMap(Converter.fromJson[DependencySnapshotInput])
-        .get
+      else
+        JsonParser
+          .parseFromString(rawString)
+          .flatMap(Converter.fromJson[DependencySnapshotInput])
+          .get
     }.failOnException
 
   private def generate(state: State, input: DependencySnapshotInput): State = {
