@@ -107,6 +107,32 @@ steps:
 
 ## Troubleshooting
 
+### How to generate a snapshot locally?
+
+For troubleshooting, it can be convenient to generate a snapshot locally.
+
+To do so you need to install the `sbt-dependency-submission` plugin in your sbt project.
+
+```scala
+// In project/plugins.sbt
+addSbtPlugin("ch.epfl.scala" % "sbt-github-dependency-submission" % "3.0.0")
+```
+
+After reloading your build, you can run:
+```
+sbt:example> githubGenerateSnapshot
+...
+[info] Dependency snapshot written to /tmp/dependency-snapshot-3080240838874963577.json
+```
+
+Or if you want to exclude some modules or configs:
+
+```
+sbt:example> githubGenerateSnapshot {"ignoredModules":["server_2.13"], "ignoredConfigs":["test"]}
+...
+[info] Dependency snapshot written to /tmp/dependency-snapshot-14803616116503623758.json
+```
+
 ### Unexpected Status: 404
 
 This error happens when the `Dependency Graph` feature is disabled.
