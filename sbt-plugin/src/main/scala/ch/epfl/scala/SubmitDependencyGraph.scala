@@ -22,7 +22,7 @@ import sjsonnew.support.scalajson.unsafe.{Parser => JsonParser, _}
 
 object SubmitDependencyGraph {
   val Generate = "githubGenerateSnapshot"
-  private val GenerateUsage = s"""$Generate {"projects":[], "scalaVersions":[]}"""
+  private val GenerateUsage = s"""$Generate {"ignoredModules":[], "ignoredConfig":[]}"""
   private val GenerateDetail = "Generate the dependency graph of a set of projects and scala versions"
 
   private val GenerateInternal = s"${Generate}Internal"
@@ -30,8 +30,6 @@ object SubmitDependencyGraph {
 
   val Submit = "githubSubmitSnapshot"
   private val SubmitDetail = "Submit the dependency graph to Github Dependency API."
-
-  def usage(command: String): String = s"""$command {"projects":[], "scalaVersions":[]}"""
 
   val commands: Seq[Command] = Seq(
     Command(Generate, (GenerateUsage, GenerateDetail), GenerateDetail)(inputParser)(generate),
@@ -43,10 +41,13 @@ object SubmitDependencyGraph {
 
   private def inputParser(state: State): Parser[DependencySnapshotInput] =
     Parsers.any.*.map { raw =>
-      JsonParser
-        .parseFromString(raw.mkString)
-        .flatMap(Converter.fromJson[DependencySnapshotInput])
-        .get
+      val rawString = raw.mkString
+      if (rawString.isEmpty) DependencySnapshotInput(None, Vector.empty, Vector.empty)
+      else
+        JsonParser
+          .parseFromString(rawString)
+          .flatMap(Converter.fromJson[DependencySnapshotInput])
+          .get
     }.failOnException
 
   private def generate(state: State, input: DependencySnapshotInput): State = {
