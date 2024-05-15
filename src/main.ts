@@ -58,9 +58,13 @@ async function run(): Promise<void> {
     }
 
     process.env['GITHUB_TOKEN'] = token
-    await cli.exec('sbt', ['--batch', `githubGenerateSnapshot ${JSON.stringify(input)}; githubSubmitSnapshot`], {
-      cwd: workingDir,
-    })
+    await cli.exec(
+      'sbt',
+      ['--batch', `githubGenerateSnapshot ${JSON.stringify(input)}; githubSubmitSnapshot`],
+      {
+        cwd: workingDir,
+      },
+    )
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(error)
