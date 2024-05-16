@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: coursier/setup-action@v1.2.0-M3
+      - uses: coursier/setup-action@v1.3.5
         with:
           apps: sbt
           jvm: 'adopt:1.8'

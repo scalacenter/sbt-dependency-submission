@@ -24,8 +24,13 @@ jobs:
   test-sbt:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-        jvm: ['adopt:1.8', 'adopt:1.11', 'temurin:1.17']
+        include:
+        - os: ubuntu-latest
+          jvm: 'adoptium:1.8.0-412'
+        - os: window-latest
+          jvm: 'adoptium:1.11.0.23'
+        - os: macOS-latest
+          jvm: 'adoptium:1.17'
       fail-fast: false
     name: Test sbt plugin on ${{ matrix.os }} - ${{ matrix.jvm }}
     runs-on: ${{ matrix.os }}
@@ -38,7 +43,7 @@ jobs:
       GITHUB_TOKEN: ${{ github.token }}
     steps:
     - uses: actions/checkout@v3
-    - uses: coursier/setup-action@v1.2.0-M3
+    - uses: coursier/setup-action@v1.3.5
       with:
         jvm: ${{ matrix.jvm }}
         apps: sbt
@@ -51,6 +56,13 @@ jobs:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.owner.login == 'scalacenter'
     strategy:
       matrix:
+        include:
+        - os: ubuntu-latest
+          jvm: 'adoptium:1.21'
+        - os: macOS-latest
+          jvm: 'adoptium:1.17'
+        - os: windows-latest
+          jvm: 'adoptium:1.8.0-412'
         os: [ubuntu-latest, macOS-latest, windows-latest]
       fail-fast: false
     name: Test Github action on ${{ matrix.os }}
@@ -59,6 +71,10 @@ jobs:
       contents: write
     steps:
     - uses: actions/checkout@v3
+    - uses: coursier/setup-action@v1.3.5
+      with:
+        jvm: ${{ matrix.jvm }}
+        apps: sbt
     - run: sbt publishLocal
       working-directory: sbt-plugin
     - run: npm version
