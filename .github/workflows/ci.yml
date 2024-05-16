@@ -27,7 +27,7 @@ jobs:
         include:
         - os: ubuntu-latest
           jvm: 'adoptium:1.8.0-412'
-        - os: window-latest
+        - os: windows-latest
           jvm: 'adoptium:1.11.0.23'
         - os: macOS-latest
           jvm: 'adoptium:1.17'
@@ -58,7 +58,7 @@ jobs:
       matrix:
         include:
         - os: ubuntu-latest
-          jvm: 'adoptium:1.21'
+          jvm: 'adoptium:1.11.0.23'
         - os: macOS-latest
           jvm: 'adoptium:1.17'
         - os: windows-latest
