@@ -10,7 +10,7 @@ inThisBuild(
     organization := "ch.epfl.scala",
     version := "1.2.0-SNAPSHOT",
     useCoursier := false, // use Ivy
-    scalaVersion := "2.12.15"
+    scalaVersion := "2.12.19"
   )
 )
 
