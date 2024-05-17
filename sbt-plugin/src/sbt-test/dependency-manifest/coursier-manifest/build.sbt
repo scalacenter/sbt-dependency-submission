@@ -10,7 +10,7 @@ inThisBuild(
     organization := "ch.epfl.scala",
     version := "1.2.0-SNAPSHOT",
     useCoursier := true,
-    scalaVersion := "2.12.19"
+    scalaVersion := "2.13.14"
   )
 )
 
