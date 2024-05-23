@@ -24,10 +24,10 @@ Global / ignoreTestConfig := {
 lazy val p1 = project
   .in(file("p1"))
   .settings(
-    libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test,
+    libraryDependencies += "org.scalameta" %% "munit" % "1.0.0" % Test,
     checkTest := {
       val manifest = githubDependencyManifest.value.get
-      checkDependency(manifest, "org.scalameta:munit_3:0.7.29")(
+      checkDependency(manifest, "org.scalameta:munit_3:1.0.0")(
         expectedRelationship = DependencyRelationship.direct,
         expectedScope = DependencyScope.development,
         expectedConfig = "test"
