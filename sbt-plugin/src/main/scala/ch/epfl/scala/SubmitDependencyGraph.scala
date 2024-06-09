@@ -24,6 +24,10 @@ object SubmitDependencyGraph {
   val Generate = "githubGenerateSnapshot"
   private val GenerateUsage = s"""$Generate {"ignoredModules":[], "ignoredConfig":[]}"""
   private val GenerateDetail = "Generate the dependency graph of a set of projects and scala versions"
+  
+  val AnalyzeDependecies = "githubAnalyzeDependencies"
+  private val AnalyzeDependenciesUsage = s"""$AnalyzeDependecies [get|list] pattern"""
+  private val AnalyzeDependenciesDetail = "Analyze the dependencies base on a search pattern"
 
   private val GenerateInternal = s"${Generate}Internal"
   private val InternalOnly = "internal usage only"
@@ -33,6 +37,7 @@ object SubmitDependencyGraph {
 
   val commands: Seq[Command] = Seq(
     Command(Generate, (GenerateUsage, GenerateDetail), GenerateDetail)(inputParser)(generate),
+    Command(AnalyzeDependecies, (AnalyzeDependenciesUsage, AnalyzeDependenciesDetail), AnalyzeDependenciesDetail)(extractPattern)(analyzeDependencies),
     Command.command(GenerateInternal, InternalOnly, InternalOnly)(generateInternal),
     Command.command(Submit, SubmitDetail, SubmitDetail)(submit)
   )
@@ -49,6 +54,32 @@ object SubmitDependencyGraph {
           .flatMap(Converter.fromJson[DependencySnapshotInput])
           .get
     }.failOnException
+
+  sealed trait AnalysisAction {
+    def name: String
+  }
+  object AnalysisAction {
+    case object Get extends AnalysisAction {
+      val name = "get"
+    }
+    case object List extends AnalysisAction {
+      val name = "list"
+    }
+    val values: Seq[AnalysisAction] = Seq(Get, List)
+    def fromString(str: String): Option[AnalysisAction] = values.find(_.name == str)
+  }
+
+
+  case class AnalysisParams(action: AnalysisAction, pattern: Option[String])
+
+  private def extractPattern(state: State): Parser[AnalysisParams] =
+    Parsers.any.*.map { raw =>
+      raw.mkString.trim.split(" ").toSeq match {
+      case Seq(action, pattern) =>
+        AnalysisParams(AnalysisAction.fromString(action).get, Some(pattern))
+      }
+    }.failOnException
+
 
   private def generate(state: State, input: DependencySnapshotInput): State = {
     val loadedBuild = state.setting(Keys.loadedBuild)
@@ -79,6 +110,43 @@ object SubmitDependencyGraph {
     }
     val commands = storeAllManifests :+ GenerateInternal
     commands.toList ::: initState
+  }
+
+  private def analyzeDependencies(state: State, params: AnalysisParams): State = {
+      val action = params.action
+      params.pattern.foreach { pattern =>
+      def getDeps(dependencies: Seq[String], pattern: String): Seq[String] = {
+        for {
+          dep <- dependencies.filter(_.contains(pattern))
+        } yield dep
+      }
+
+      def resolvedDeps(tabs: String, acc: Seq[String], resolvedByName: Map[String, DependencyNode], pattern: String): Seq[String] = {
+        acc ++ (for {
+          (name, resolved) <- resolvedByName.toSeq
+          matchingDependency <- getDeps(resolved.dependencies, pattern)
+          resolvedDep <- resolvedDeps("  " + tabs, acc ++ Seq(tabs + matchingDependency), resolvedByName, name)
+        } yield resolvedDep)
+      }
+
+      val matches = (for {
+        manifests <- state.get(githubManifestsKey).toSeq
+        (_, manifest) <- manifests
+      } yield (manifest, resolvedDeps("", Nil, manifest.resolved, pattern))).toMap
+
+      if (action == AnalysisAction.Get) {
+        matches.foreach { case (manifest, deps) =>
+          println(s"Manifest: ${manifest.name}")
+          println(deps.mkString("\n"))
+        }
+      }
+      else if (action == AnalysisAction.List) {
+        println(
+        matches.flatMap { case (manifest, deps) => deps }
+          .filter(_.contains(pattern)).toSet.mkString("\n"))
+      }
+    }
+    state
   }
 
   private def generateInternal(state: State): State = {
