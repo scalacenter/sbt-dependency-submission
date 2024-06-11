@@ -65,18 +65,21 @@ object SubmitDependencyGraph {
     case object List extends AnalysisAction {
       val name = "list"
     }
-    val values: Seq[AnalysisAction] = Seq(Get, List)
+    case object Alerts extends AnalysisAction {
+      val name = "alerts"
+    }
+    val values: Seq[AnalysisAction] = Seq(Get, List, Alerts)
     def fromString(str: String): Option[AnalysisAction] = values.find(_.name == str)
   }
 
 
-  case class AnalysisParams(action: AnalysisAction, pattern: Option[String])
+  case class AnalysisParams(action: AnalysisAction, arg: Option[String])
 
   private def extractPattern(state: State): Parser[AnalysisParams] =
     Parsers.any.*.map { raw =>
       raw.mkString.trim.split(" ").toSeq match {
-      case Seq(action, pattern) =>
-        AnalysisParams(AnalysisAction.fromString(action).get, Some(pattern))
+      case Seq(action, arg) =>
+        AnalysisParams(AnalysisAction.fromString(action).get, Some(arg))
       }
     }.failOnException
 
@@ -112,9 +115,7 @@ object SubmitDependencyGraph {
     commands.toList ::: initState
   }
 
-  private def analyzeDependencies(state: State, params: AnalysisParams): State = {
-      val action = params.action
-      params.pattern.foreach { pattern =>
+  private def analyzeDependenciesInternal(state: State, action: AnalysisAction, pattern: String) = {
       def getDeps(dependencies: Seq[String], pattern: String): Seq[String] = {
         for {
           dep <- dependencies.filter(_.contains(pattern))
@@ -137,13 +138,56 @@ object SubmitDependencyGraph {
       if (action == AnalysisAction.Get) {
         matches.foreach { case (manifest, deps) =>
           println(s"Manifest: ${manifest.name}")
-          println(deps.mkString("\n"))
+          println(deps.map{ dep : String => s"  ${dep}" }.mkString("\n"))
         }
       }
       else if (action == AnalysisAction.List) {
         println(
         matches.flatMap { case (manifest, deps) => deps }
           .filter(_.contains(pattern)).toSet.mkString("\n"))
+      }
+  }
+
+  private def getGithubTokenFromGhConfigDir(): String = {
+    // use GH_CONFIG_DIR variable if it exists
+    val ghConfigDir = Properties.envOrElse("GH_CONFIG_DIR", Paths.get(System.getProperty("user.home"), ".config", "gh").toString)
+    val ghConfigFile = Paths.get(ghConfigDir).resolve("hosts.yml").toFile
+    if (ghConfigFile.exists()) {
+      val lines = IO.readLines(ghConfigFile)
+      val tokenLine = lines.find(_.contains("oauth_token"))
+      tokenLine match {
+        case Some(line) => line.split(":").last.trim
+        case None => throw new MessageOnlyException("No token found in gh config file")
+      }
+    } else {
+      throw new MessageOnlyException("No gh config file found")
+    }
+  }
+
+  private def downloadAlerts(state: State, repo: String) = {
+      val snapshotUrl = s"https://api.github.com/repos/$repo/dependabot/alerts"
+      val request = Gigahorse
+        .url(snapshotUrl)
+        .get
+        .addHeaders(
+          "Authorization" -> s"token ${getGithubTokenFromGhConfigDir()}"
+        )
+      state.log.info(s"Downloading alerts from $snapshotUrl")
+      for {
+        httpResp <- Try(Await.result(http.processFull(request), Duration.Inf))
+        alerts <- getAlerts(httpResp)
+      } yield {
+        println(httpResp.bodyAsString)
+      }
+  }
+
+  private def analyzeDependencies(state: State, params: AnalysisParams): State = {
+    val action = params.action
+    if (Seq(AnalysisAction.Get, AnalysisAction.List).contains(action)) {
+      params.arg.foreach { pattern => analyzeDependenciesInternal(state, action, pattern) }
+    } else if (action == AnalysisAction.Alerts) {
+      params.arg.foreach { repo =>
+        downloadAlerts(state, repo)
       }
     }
     state
@@ -200,6 +244,40 @@ object SubmitDependencyGraph {
   private def setGithubOutputs(outputs: (String, String)*): Unit =
     for (output <- githubOutput())
       IO.writeLines(output, outputs.map { case (name, value) => s"${name}=${value}" }, append = true)
+
+  case class Vulnerability(
+      packageId: String,
+      vulnerableVersionRange: String,
+      firstPatchedVersion: String,
+      severity: String,
+  )
+
+  private def getVulnerabilities(httpResp: FullResponse): Try[Seq[Vulnerability]] =
+    httpResp.status match {
+      case status if status / 100 == 2 =>
+        // here is the jq command:
+        // jq -r '.[]|select((.state == "open"))|.security_vulnerability|"\(.package.name);\(.vulnerable_version_range);\(.first_patched_version.identifier);\(.severity)"' | sort
+        // do the equivalent in scala and build a seq of Vulnerability, without a converter
+        val json = JsonParser.parseFromByteBuffer(httpResp.bodyAsByteBuffer).get
+
+
+        // fix line below, because "value asArray is not a member of sjsonnew.shaded.scalajson.ast.unsafe.JValue"
+        // val vulnerabilities = json.asArray.get.value.map { value =>
+        val vulnerabilities = json.asArray.get.value.map { value =>
+          val obj = value.asObject.get
+          val securityVulnerability = obj("security_vulnerability").get.asObject.get
+          Vulnerability(
+            securityVulnerability("package").get.asObject.get("name").get.asString.get,
+            securityVulnerability("vulnerable_version_range").get.asString.get,
+            securityVulnerability("first_patched_version").get.asObject.get("identifier").get.asString.get,
+            securityVulnerability("severity").get.asString.get
+          )
+        }
+      case status =>
+        val message =
+          s"Unexpected status $status ${httpResp.statusText} with body:\n${httpResp.bodyAsString}"
+        throw new MessageOnlyException(message)
+    }
 
   private def getSnapshot(httpResp: FullResponse): Try[SnapshotResponse] =
     httpResp.status match {
