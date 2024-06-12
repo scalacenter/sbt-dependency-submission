@@ -83,6 +83,8 @@ object SubmitDependencyGraph {
       raw.mkString.trim.split(" ").toSeq match {
       case Seq(action, arg) =>
         AnalysisParams(AnalysisAction.fromString(action).get, Some(arg))
+      case Seq(action) =>
+        AnalysisParams(AnalysisAction.fromString(action).get, None)
       }
     }.failOnException
 
@@ -202,27 +204,35 @@ object SubmitDependencyGraph {
   # "pkg:maven/com.google.guava/guava@31.1-jre"
   */
 
+ // versionMatchesRange("31.1-jre", ">= 1.0, < 32.0.0-android") => true
+ // versionMatchesRange("2.8.5", "< 2.9.0") => true
+ // versionMatchesRange("2.9.0", "< 2.9.0") => false
+
+ private def translateToSemVer(string: String): String = {
+   // if a version in the string has more than 3 digits, we assume it's a pre-release version
+   // ">= 1.0 <32.0.0.4" => ">= 1.0 < 32.0.0-4"
+   string.replaceAll("([0-9]+)\\.([0-9]+)\\.([0-9]+)\\.([0-9]+)", "$1.$2.$3-$4")
+ }
+
+ private def versionMatchesRange(versionStr: String, rangeStr: String): Boolean = {
+   val range = rangeStr.replaceAll(" ", "").replace(",", " ")
+   VersionNumber(translateToSemVer(versionStr)).matchesSemVer(SemanticSelector(translateToSemVer(range)))
+ }
+
  private def vulnerabilityMatchesArtifact(alert: Vulnerability, artifact: String): String = {
    val alertMavenPath = s"pkg:maven/${alert.packageId.replace(":", "/")}@"
    if (artifact.startsWith(alertMavenPath)) {
      val version = artifact.split("@").last
-     if (alert.vulnerableVersionRange.contains(",")) {
-       val range = alert.vulnerableVersionRange.split(",")
-       if (range.head <= version && version < range.last) {
-         "bad"
-       } else {
-         "good"
-       }
-       } else {
-         if (alert.vulnerableVersionRange <= version) {
-           "bad"
-         } else {
-           "good"
-         }
-       }
-       } else {
-         "no"
-       }
+     // vulnerableVersionRange can be ">= 1.0, < 32.0.0-android" or "< 2.9.0"
+     val bad = versionMatchesRange(version, alert.vulnerableVersionRange)
+     if (bad) {
+       "bad"
+     } else {
+       "good"
+     }
+     } else {
+       "no"
+     }
  }
 
  private def vulnerabilityMatchesArtifacts(alert: Vulnerability, artifacts: Seq[String]): Map[String, Seq[String]] = {
