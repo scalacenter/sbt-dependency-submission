@@ -17,7 +17,7 @@ import gigahorse.HttpClient
 import gigahorse.support.asynchttpclient.Gigahorse
 import sbt._
 import sbt.internal.util.complete._
-import sjsonnew.shaded.scalajson.ast.unsafe.JValue
+import sjsonnew.shaded.scalajson.ast.unsafe.{ JValue, JArray, JObject, JField, JString }
 import sjsonnew.support.scalajson.unsafe.{Parser => JsonParser, _}
 
 object SubmitDependencyGraph {
@@ -68,7 +68,10 @@ object SubmitDependencyGraph {
     case object Alerts extends AnalysisAction {
       val name = "alerts"
     }
-    val values: Seq[AnalysisAction] = Seq(Get, List, Alerts)
+    case object Cves extends AnalysisAction {
+      val name = "cves"
+    }
+    val values: Seq[AnalysisAction] = Seq(Get, List, Alerts, Cves)
     def fromString(str: String): Option[AnalysisAction] = values.find(_.name == str)
   }
 
@@ -164,7 +167,7 @@ object SubmitDependencyGraph {
     }
   }
 
-  private def downloadAlerts(state: State, repo: String) = {
+  private def downloadAlerts(state: State, repo: String) : Try[State] = {
       val snapshotUrl = s"https://api.github.com/repos/$repo/dependabot/alerts"
       val request = Gigahorse
         .url(snapshotUrl)
@@ -175,22 +178,99 @@ object SubmitDependencyGraph {
       state.log.info(s"Downloading alerts from $snapshotUrl")
       for {
         httpResp <- Try(Await.result(http.processFull(request), Duration.Inf))
-        alerts <- getAlerts(httpResp)
+        vulnerabilities <- getVulnerabilities(httpResp)
       } yield {
-        println(httpResp.bodyAsString)
+        vulnerabilities.foreach { v =>
+          println(s"${v.packageId} ${v.vulnerableVersionRange} ${v.firstPatchedVersion} ${v.severity}")
+        }
+        state.put(githubAlertsKey, vulnerabilities)
       }
+  }
+
+  private def getAllArtifacts(state: State): Seq[String] = {
+    for {
+      manifests <- state.get(githubManifestsKey).toSeq
+      (_, manifest) <- manifests
+      artifact <- manifest.resolved.values.toSeq
+    } yield artifact.package_url
+  }
+
+  /*
+  # example alert
+  # [ "com.google.guava:guava", ">= 1.0, < 32.0.0-android", "32.0.0-android" ]
+  # example artifact
+  # "pkg:maven/com.google.guava/guava@31.1-jre"
+  */
+
+ private def vulnerabilityMatchesArtifact(alert: Vulnerability, artifact: String): String = {
+   val alertMavenPath = s"pkg:maven/${alert.packageId.replace(":", "/")}@"
+   if (artifact.startsWith(alertMavenPath)) {
+     val version = artifact.split("@").last
+     if (alert.vulnerableVersionRange.contains(",")) {
+       val range = alert.vulnerableVersionRange.split(",")
+       if (range.head <= version && version < range.last) {
+         "bad"
+       } else {
+         "good"
+       }
+       } else {
+         if (alert.vulnerableVersionRange <= version) {
+           "bad"
+         } else {
+           "good"
+         }
+       }
+       } else {
+         "no"
+       }
+ }
+
+ private def vulnerabilityMatchesArtifacts(alert: Vulnerability, artifacts: Seq[String]): Map[String, Seq[String]] = {
+   artifacts.foldLeft(Map("good" -> Seq.empty[String], "bad" -> Seq.empty[String])) { (acc, artifact) =>
+     val res = vulnerabilityMatchesArtifact(alert, artifact)
+     if (res != "no") {
+       acc.updated(res, acc(res) :+ artifact)
+     } else {
+       acc
+     }
+   }
+ }
+
+  private def analyzeCves(state: State): State = {
+    val vulnerabilities = state.get(githubAlertsKey).get
+    val cves = vulnerabilities
+    val artifacts = getAllArtifacts(state)
+    cves.foreach { v =>
+      val matches = vulnerabilityMatchesArtifacts(v, artifacts)
+      println(s"${v.packageId} ${v.vulnerableVersionRange} ${v.firstPatchedVersion} ${v.severity}")
+      if (matches("good").length + matches("bad").length > 0) {
+        matches("good").foreach { m =>
+          println(s"  🟢 ${m}")
+        }
+        matches("bad").foreach { m =>
+          println(s"  🔴 ${m}")
+        }
+      } else {
+        println("  🎉 no match (dependency was probably removed)")
+      }
+    }
+    state
   }
 
   private def analyzeDependencies(state: State, params: AnalysisParams): State = {
     val action = params.action
     if (Seq(AnalysisAction.Get, AnalysisAction.List).contains(action)) {
       params.arg.foreach { pattern => analyzeDependenciesInternal(state, action, pattern) }
+      state
     } else if (action == AnalysisAction.Alerts) {
-      params.arg.foreach { repo =>
-        downloadAlerts(state, repo)
-      }
+      params.arg.map { repo =>
+        downloadAlerts(state, repo).get
+      }.get
+    } else if (action == AnalysisAction.Cves) {
+      analyzeCves(state)
+    } else {
+      state
     }
-    state
   }
 
   private def generateInternal(state: State): State = {
@@ -254,24 +334,40 @@ object SubmitDependencyGraph {
 
   private def getVulnerabilities(httpResp: FullResponse): Try[Seq[Vulnerability]] =
     httpResp.status match {
-      case status if status / 100 == 2 =>
+      case status if status / 100 == 2 => Try {
         // here is the jq command:
         // jq -r '.[]|select((.state == "open"))|.security_vulnerability|"\(.package.name);\(.vulnerable_version_range);\(.first_patched_version.identifier);\(.severity)"' | sort
         // do the equivalent in scala and build a seq of Vulnerability, without a converter
-        val json = JsonParser.parseFromByteBuffer(httpResp.bodyAsByteBuffer).get
+        val json : JValue = JsonParser.parseFromByteBuffer(httpResp.bodyAsByteBuffer).get
 
 
+
+        //
         // fix line below, because "value asArray is not a member of sjsonnew.shaded.scalajson.ast.unsafe.JValue"
         // val vulnerabilities = json.asArray.get.value.map { value =>
-        val vulnerabilities = json.asArray.get.value.map { value =>
-          val obj = value.asObject.get
-          val securityVulnerability = obj("security_vulnerability").get.asObject.get
-          Vulnerability(
-            securityVulnerability("package").get.asObject.get("name").get.asString.get,
-            securityVulnerability("vulnerable_version_range").get.asString.get,
-            securityVulnerability("first_patched_version").get.asObject.get("identifier").get.asString.get,
-            securityVulnerability("severity").get.asString.get
+        json.asInstanceOf[JArray].value.map { value =>
+          val obj = value.asInstanceOf[JObject].value
+
+          // convert obj to map of string => JValue :
+
+          val map = obj.map { case JField(k, v) => (k, v) }.toMap
+
+          val securityVulnerability = map("security_vulnerability").asInstanceOf[JObject].value.map { case JField(k, v) => (k, v) }.toMap
+
+          val packageObj = securityVulnerability("package").asInstanceOf[JObject].value.map { case JField(k, v) => (k, v) }.toMap
+
+          val firstPatchedVersion = Try(securityVulnerability("first_patched_version").asInstanceOf[JObject].value.map { case JField(k, v) => (k, v) }.toMap).getOrElse(Map.empty)
+
+          (
+            map("state") == JString("open"),
+            Vulnerability(
+            packageObj("name").asInstanceOf[JString].value,
+            securityVulnerability("vulnerable_version_range").asInstanceOf[JString].value,
+            firstPatchedVersion.get("identifier").map { x => x.asInstanceOf[JString].value }.getOrElse(""),
+            securityVulnerability("severity").asInstanceOf[JString].value
           )
+        )
+        }.filter(_._1).map(_._2)
         }
       case status =>
         val message =
