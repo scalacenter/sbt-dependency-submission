@@ -24,6 +24,7 @@ object SubmitDependencyGraph {
   val Generate = "githubGenerateSnapshot"
   private val GenerateUsage = s"""$Generate {"ignoredModules":[], "ignoredConfig":[]}"""
   private val GenerateDetail = "Generate the dependency graph of a set of projects and scala versions"
+
   private val GenerateInternal = s"${Generate}Internal"
   private val InternalOnly = "internal usage only"
 
