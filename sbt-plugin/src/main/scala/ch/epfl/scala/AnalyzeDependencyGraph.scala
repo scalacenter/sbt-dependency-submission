@@ -183,26 +183,34 @@ object AnalyzeDependencyGraph {
    result
  }
 
- private def vulnerabilityMatchesArtifact(alert: Vulnerability, artifact: String): String = {
+ // create an enum with good, bad, no
+ 
+ sealed trait Vulnerable
+
+ object Good extends Vulnerable
+ object Bad extends Vulnerable
+ object No extends Vulnerable
+
+ private def vulnerabilityMatchesArtifact(alert: Vulnerability, artifact: String): Vulnerable = {
    val alertMavenPath = s"pkg:maven/${alert.packageId.replace(":", "/")}@"
    if (artifact.startsWith(alertMavenPath)) {
      val version = artifact.split("@").last
      // vulnerableVersionRange can be ">= 1.0, < 32.0.0-android" or "< 2.9.0"
      val bad = versionMatchesRange(version, alert.vulnerableVersionRange)
      if (bad) {
-       "bad"
+       Bad
      } else {
-       "good"
+       Good
      }
      } else {
-       "no"
+       No
      }
  }
 
- private def vulnerabilityMatchesArtifacts(alert: Vulnerability, artifacts: Seq[String]): Map[String, Seq[String]] = {
-   artifacts.foldLeft(Map("good" -> Seq.empty[String], "bad" -> Seq.empty[String])) { (acc, artifact) =>
+ private def vulnerabilityMatchesArtifacts(alert: Vulnerability, artifacts: Seq[String]): Map[Vulnerable, Seq[String]] = {
+   artifacts.foldLeft(Map(Good -> Seq.empty[String], Bad -> Seq.empty[String])) { (acc, artifact) =>
      val res = vulnerabilityMatchesArtifact(alert, artifact)
-     if (res != "no") {
+     if (res != No) {
        acc.updated(res, acc(res) :+ artifact)
      } else {
        acc
@@ -217,11 +225,11 @@ object AnalyzeDependencyGraph {
     cves.foreach { v =>
       val matches = vulnerabilityMatchesArtifacts(v, artifacts)
       println(s"${v.packageId} ${v.vulnerableVersionRange} ${v.firstPatchedVersion} ${v.severity}")
-      if (matches("good").length + matches("bad").length > 0) {
-        matches("good").foreach { m =>
+      if (matches(Good).length + matches(Bad).length > 0) {
+        matches(Good).foreach { m =>
           println(s"  🟢 ${m}")
         }
-        matches("bad").foreach { m =>
+        matches(Bad).foreach { m =>
           println(s"  🔴 ${m}")
         }
       } else {
