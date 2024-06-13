@@ -8,7 +8,6 @@ import scala.concurrent.duration.Duration
 import scala.util.Properties
 import scala.util.Try
 
-import sjsonnew.shaded.scalajson.ast.unsafe.JValue
 import ch.epfl.scala.GithubDependencyGraphPlugin.autoImport._
 import ch.epfl.scala.JsonProtocol._
 import ch.epfl.scala.githubapi.JsonProtocol._
@@ -18,13 +17,14 @@ import gigahorse.HttpClient
 import gigahorse.support.asynchttpclient.Gigahorse
 import sbt._
 import sbt.internal.util.complete._
+import sjsonnew.shaded.scalajson.ast.unsafe.JValue
 import sjsonnew.support.scalajson.unsafe.{Parser => JsonParser, _}
 
 object SubmitDependencyGraph {
   val Generate = "githubGenerateSnapshot"
   private val GenerateUsage = s"""$Generate {"ignoredModules":[], "ignoredConfig":[]}"""
   private val GenerateDetail = "Generate the dependency graph of a set of projects and scala versions"
-  
+    
   private val GenerateInternal = s"${Generate}Internal"
   private val InternalOnly = "internal usage only"
 
@@ -49,7 +49,6 @@ object SubmitDependencyGraph {
           .flatMap(Converter.fromJson[DependencySnapshotInput])
           .get
     }.failOnException
-
 
   private def generate(state: State, input: DependencySnapshotInput): State = {
     val loadedBuild = state.setting(Keys.loadedBuild)
