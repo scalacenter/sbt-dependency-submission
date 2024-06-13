@@ -167,19 +167,27 @@ object SubmitDependencyGraph {
       }
   }
 
+  private def getGithubToken(ghConfigFile: File): Option[String] = {
+    println(s"extract token from ${ghConfigFile.getPath()}")
+    if (ghConfigFile.exists()) {
+      val lines = IO.readLines(ghConfigFile)
+      val tokenLine = lines.find(_.contains("oauth_token"))
+      tokenLine.map { line => line.split(":").last.trim }
+      } else {
+        None
+      }
+  }
+
   private def getGithubTokenFromGhConfigDir(): String = {
     // use GH_CONFIG_DIR variable if it exists
     val ghConfigDir = Properties.envOrElse("GH_CONFIG_DIR", Paths.get(System.getProperty("user.home"), ".config", "gh").toString)
     val ghConfigFile = Paths.get(ghConfigDir).resolve("hosts.yml").toFile
-    if (ghConfigFile.exists()) {
-      val lines = IO.readLines(ghConfigFile)
-      val tokenLine = lines.find(_.contains("oauth_token"))
-      tokenLine match {
-        case Some(line) => line.split(":").last.trim
-        case None => throw new MessageOnlyException("No token found in gh config file")
+    getGithubToken(ghConfigFile).getOrElse {
+      val ghConfigPath = Properties.envOrElse("HUB_CONFIG", Paths.get(System.getProperty("user.home"), ".config", "hub").toString)
+      val hubConfigFile = Paths.get(ghConfigPath).toFile
+      getGithubToken(hubConfigFile).getOrElse {
+        githubToken()
       }
-    } else {
-      throw new MessageOnlyException("No gh config file found")
     }
   }
 
@@ -204,11 +212,13 @@ object SubmitDependencyGraph {
   }
 
   private def getAllArtifacts(state: State): Seq[String] = {
+  {
     for {
       manifests <- state.get(githubManifestsKey).toSeq
       (_, manifest) <- manifests
       artifact <- manifest.resolved.values.toSeq
     } yield artifact.package_url
+  }.toSet.toSeq
   }
 
   /*
