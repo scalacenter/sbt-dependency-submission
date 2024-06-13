@@ -25,7 +25,7 @@ import sbt._
 object AnalyzeDependencyGraph {
 
   val AnalyzeDependecies = "githubAnalyzeDependencies"
-  private val AnalyzeDependenciesUsage = s"""$AnalyzeDependecies [get|list|alerts|cves] pattern"""
+  private val AnalyzeDependenciesUsage = s"""$AnalyzeDependecies [${AnalysisAction.values.map(_.name).mkString("|")}] [pattern]"""
   private val AnalyzeDependenciesDetail = "Analyze the dependencies base on a search pattern"
 
   val commands: Seq[Command] = Seq(
@@ -168,23 +168,15 @@ object AnalyzeDependencyGraph {
   }.toSet.toSeq
   }
 
-  /*
-  # example alert
-  # [ "com.google.guava:guava", ">= 1.0, < 32.0.0-android", "32.0.0-android" ]
-  # example artifact
-  # "pkg:maven/com.google.guava/guava@31.1-jre"
-  */
-
- // versionMatchesRange("31.1-jre", ">= 1.0, < 32.0.0-android") => true
- // versionMatchesRange("2.8.5", "< 2.9.0") => true
- // versionMatchesRange("2.9.0", "< 2.9.0") => false
-
  private def translateToSemVer(string: String): String = {
    // if a version in the string has more than 3 digits, we assume it's a pre-release version
    // ">= 1.0 <32.0.0.4" => ">= 1.0 < 32.0.0-4"
    string.replaceAll("([0-9]+)\\.([0-9]+)\\.([0-9]+)\\.([0-9]+)", "$1.$2.$3-$4")
  }
 
+ // versionMatchesRange("31.1-jre", ">= 1.0, < 32.0.0-android") => true
+ // versionMatchesRange("2.8.5", "< 2.9.0") => true
+ // versionMatchesRange("2.9.0", "< 2.9.0") => false
  private def versionMatchesRange(versionStr: String, rangeStr: String): Boolean = {
    val range = rangeStr.replaceAll(" ", "").replace(",", " ")
    val result = VersionNumber(translateToSemVer(versionStr)).matchesSemVer(SemanticSelector(translateToSemVer(range)))
@@ -274,20 +266,10 @@ object AnalyzeDependencyGraph {
   private def getVulnerabilities(httpResp: FullResponse): Try[Seq[Vulnerability]] =
     httpResp.status match {
       case status if status / 100 == 2 => Try {
-        // here is the jq command:
-        // jq -r '.[]|select((.state == "open"))|.security_vulnerability|"\(.package.name);\(.vulnerable_version_range);\(.first_patched_version.identifier);\(.severity)"' | sort
-        // do the equivalent in scala and build a seq of Vulnerability, without a converter
         val json : JValue = JsonParser.parseFromByteBuffer(httpResp.bodyAsByteBuffer).get
 
-
-
-        //
-        // fix line below, because "value asArray is not a member of sjsonnew.shaded.scalajson.ast.unsafe.JValue"
-        // val vulnerabilities = json.asArray.get.value.map { value =>
         json.asInstanceOf[JArray].value.map { value =>
           val obj = value.asInstanceOf[JObject].value
-
-          // convert obj to map of string => JValue :
 
           val map = obj.map { case JField(k, v) => (k, v) }.toMap
 
