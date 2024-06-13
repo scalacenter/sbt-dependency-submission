@@ -128,16 +128,30 @@ object SubmitDependencyGraph {
       }
 
       def resolvedDeps(tabs: String, acc: Seq[String], resolvedByName: Map[String, DependencyNode], pattern: String): Seq[String] = {
+
         acc ++ (for {
           (name, resolved) <- resolvedByName.toSeq
-          matchingDependency <- getDeps(resolved.dependencies, pattern)
-          resolvedDep <- resolvedDeps("  " + tabs, acc ++ Seq(tabs + matchingDependency), resolvedByName, name)
-        } yield resolvedDep)
+          matchingDependencies = getDeps(resolved.dependencies, pattern)
+          resultDeps <- if (matchingDependencies.isEmpty) {
+            if (name.contains(pattern)) {
+              Seq(Seq(tabs + name))
+            } else {
+              Nil
+            }
+          } else {
+            for {
+              matchingDependency <- matchingDependencies
+            } yield resolvedDeps("  " + tabs, acc ++ Seq(tabs + matchingDependency), resolvedByName, name)
+          }
+          resultDep <- resultDeps
+        } yield {
+          resultDep
+        })
       }
 
       val matches = (for {
         manifests <- state.get(githubManifestsKey).toSeq
-        (_, manifest) <- manifests
+        (name, manifest) <- manifests
       } yield (manifest, resolvedDeps("", Nil, manifest.resolved, pattern))).toMap
 
       if (action == AnalysisAction.Get) {
