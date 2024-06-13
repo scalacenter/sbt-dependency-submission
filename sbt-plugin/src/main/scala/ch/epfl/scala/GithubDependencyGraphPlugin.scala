@@ -32,7 +32,7 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
     val githubManifestsKey: AttributeKey[Map[String, githubapi.Manifest]] = AttributeKey("githubDependencyManifests")
     val githubProjectsKey: AttributeKey[Seq[ProjectRef]] = AttributeKey("githubProjectRefs")
     val githubSnapshotFileKey: AttributeKey[File] = AttributeKey("githubSnapshotFile")
-    val githubAlertsKey: AttributeKey[Seq[SubmitDependencyGraph.Vulnerability]] = AttributeKey("githubAlerts")
+    val githubAlertsKey: AttributeKey[Seq[AnalyzeDependencyGraph.Vulnerability]] = AttributeKey("githubAlerts")
 
     val githubDependencyManifest: TaskKey[Option[githubapi.Manifest]] = taskKey(
       "The dependency manifest of the project"
@@ -49,7 +49,7 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
 
   override def globalSettings: Seq[Setting[_]] = Def.settings(
     githubStoreDependencyManifests := storeManifestsTask.evaluated,
-    Keys.commands ++= SubmitDependencyGraph.commands
+    Keys.commands ++= SubmitDependencyGraph.commands ++ AnalyzeDependencyGraph.commands
   )
 
   override def projectSettings: Seq[Setting[_]] = Def.settings(
