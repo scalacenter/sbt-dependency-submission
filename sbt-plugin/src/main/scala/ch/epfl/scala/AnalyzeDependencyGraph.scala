@@ -35,11 +35,13 @@ object AnalyzeDependencyGraph {
       }
       case object Alerts extends AnalysisAction {
         val name = "alerts"
-        val help = "download and display CVEs alerts from Github (use hub or gh local config or GIT_TOKEN env var to authenticate)"
+        val help =
+          "download and display CVEs alerts from Github (use hub or gh local config or GIT_TOKEN env var to authenticate)"
       }
       case object Cves extends AnalysisAction {
         val name = "cves"
-        val help = "analyze CVEs alerts against the dependencies (requires githubGenerateSnapshot and githubAnalyzeDependencies alerts)"
+        val help =
+          "analyze CVEs alerts against the dependencies (requires githubGenerateSnapshot and githubAnalyzeDependencies alerts)"
       }
 
       val values: Seq[AnalysisAction] = Seq(Get, List, Alerts, Cves)
@@ -50,10 +52,10 @@ object AnalyzeDependencyGraph {
     def blue(str: String): String = s"\u001b[34m${str}\u001b[0m"
 
     case class Vulnerability(
-      packageId: String,
-      vulnerableVersionRange: String,
-      firstPatchedVersion: String,
-      severity: String
+        packageId: String,
+        vulnerableVersionRange: String,
+        firstPatchedVersion: String,
+        severity: String
     ) {
       def severityColor: String = severity match {
         case "critical" => "\u001b[31m"
@@ -65,7 +67,8 @@ object AnalyzeDependencyGraph {
 
       def coloredSeverity: String = s"${severityColor}${severity}\u001b[0m"
 
-      override def toString: String = s"${blue(packageId)} [ $vulnerableVersionRange ] fixed: $firstPatchedVersion $coloredSeverity"
+      override def toString: String =
+        s"${blue(packageId)} [ $vulnerableVersionRange ] fixed: $firstPatchedVersion $coloredSeverity"
     }
 
     case class AnalysisParams(action: AnalysisAction, arg: Option[String])
@@ -79,13 +82,16 @@ object AnalyzeDependencyGraph {
   import Model._
 
   val AnalyzeDependencies = "githubAnalyzeDependencies"
-  private val AnalyzeDependenciesUsage = s"""$AnalyzeDependencies [${AnalysisAction.values.map(_.name).mkString("|")}] [pattern]"""
+  private val AnalyzeDependenciesUsage =
+    s"""$AnalyzeDependencies [${AnalysisAction.values.map(_.name).mkString("|")}] [pattern]"""
   private val AnalyzeDependenciesDetail = s"""Analyze the dependencies based on a search pattern:
   ${AnalysisAction.values.map(a => s"${a.name}: ${a.help}").mkString("\n  ")}
   """
 
   val commands: Seq[Command] = Seq(
-    Command(AnalyzeDependencies, (AnalyzeDependenciesUsage, AnalyzeDependenciesDetail), AnalyzeDependenciesDetail)(extractPattern)(analyzeDependencies)
+    Command(AnalyzeDependencies, (AnalyzeDependenciesUsage, AnalyzeDependenciesDetail), AnalyzeDependenciesDetail)(
+      extractPattern
+    )(analyzeDependencies)
   )
 
   private lazy val http: HttpClient = Gigahorse.http(Gigahorse.config)
@@ -98,37 +104,54 @@ object AnalyzeDependencyGraph {
       }
     }.failOnException
 
-  private def highlight(string: String, pattern: String): String = 
+  private def highlight(string: String, pattern: String): String =
     string.replaceAll(pattern, s"\u001b[32m${pattern}\u001b[0m")
 
-  private def analyzeDependenciesInternal(state: State, action: AnalysisAction, pattern: String, originalPattern: String): Unit = {
-    def getDeps(dependencies: Seq[String], pattern: String): Seq[String] = 
+  private def analyzeDependenciesInternal(
+      state: State,
+      action: AnalysisAction,
+      pattern: String,
+      originalPattern: String
+  ): Unit = {
+    def getDeps(dependencies: Seq[String], pattern: String): Seq[String] =
       dependencies.filter(_.contains(pattern)).map(highlight(_, originalPattern))
 
-    def resolvedDeps(tabs: String, acc: Seq[String], resolvedByName: Map[String, DependencyNode], pattern: String, originalPattern: String): Seq[String] = {
-      acc ++ resolvedByName.toSeq.flatMap { case (name, resolved) =>
-        val matchingDependencies = getDeps(resolved.dependencies, pattern)
-        if (matchingDependencies.isEmpty) {
-          if (name.contains(pattern)) Seq(tabs + highlight(name, originalPattern)) else Nil
-        } else {
-          matchingDependencies.flatMap { matchingDependency =>
-            resolvedDeps("  " + tabs, acc :+ (tabs + matchingDependency), resolvedByName, name, originalPattern)
+    def resolvedDeps(
+        tabs: String,
+        acc: Seq[String],
+        resolvedByName: Map[String, DependencyNode],
+        pattern: String,
+        originalPattern: String
+    ): Seq[String] =
+      acc ++ resolvedByName.toSeq.flatMap {
+        case (name, resolved) =>
+          val matchingDependencies = getDeps(resolved.dependencies, pattern)
+          if (matchingDependencies.isEmpty) {
+            if (name.contains(pattern)) Seq(tabs + highlight(name, originalPattern)) else Nil
+          } else {
+            matchingDependencies.flatMap { matchingDependency =>
+              resolvedDeps("  " + tabs, acc :+ (tabs + matchingDependency), resolvedByName, name, originalPattern)
+            }
           }
+      }
+
+    val matches = state
+      .get(githubManifestsKey)
+      .toSeq
+      .flatMap { manifests =>
+        manifests.map {
+          case (name, manifest) =>
+            manifest -> resolvedDeps("", Nil, manifest.resolved, pattern, originalPattern = pattern)
         }
       }
-    }
-
-    val matches = state.get(githubManifestsKey).toSeq.flatMap { manifests =>
-      manifests.map { case (name, manifest) =>
-        manifest -> resolvedDeps("", Nil, manifest.resolved, pattern, originalPattern = pattern)
-      }
-    }.toMap
+      .toMap
 
     action match {
       case AnalysisAction.Get =>
-        matches.foreach { case (manifest, deps) =>
-          println(s"📁 ${blue(manifest.name)}")
-          println(deps.map(dep => s"  $dep").mkString("\n"))
+        matches.foreach {
+          case (manifest, deps) =>
+            println(s"📁 ${blue(manifest.name)}")
+            println(deps.map(dep => s"  $dep").mkString("\n"))
         }
       case AnalysisAction.List =>
         println(matches.values.flatten.filter(_.contains(pattern)).toSet.mkString("\n"))
@@ -144,10 +167,12 @@ object AnalyzeDependencyGraph {
   }
 
   private def getGithubTokenFromGhConfigDir(): String = {
-    val ghConfigDir = Properties.envOrElse("GH_CONFIG_DIR", Paths.get(System.getProperty("user.home"), ".config", "gh").toString)
+    val ghConfigDir =
+      Properties.envOrElse("GH_CONFIG_DIR", Paths.get(System.getProperty("user.home"), ".config", "gh").toString)
     val ghConfigFile = Paths.get(ghConfigDir).resolve("hosts.yml").toFile
     getGithubToken(ghConfigFile).getOrElse {
-      val ghConfigPath = Properties.envOrElse("HUB_CONFIG", Paths.get(System.getProperty("user.home"), ".config", "hub").toString)
+      val ghConfigPath =
+        Properties.envOrElse("HUB_CONFIG", Paths.get(System.getProperty("user.home"), ".config", "hub").toString)
       val hubConfigFile = Paths.get(ghConfigPath).toFile
       getGithubToken(hubConfigFile).getOrElse(githubToken())
     }
@@ -155,7 +180,8 @@ object AnalyzeDependencyGraph {
 
   private def downloadAlerts(state: State, repo: String): Try[State] = {
     val snapshotUrl = s"https://api.github.com/repos/$repo/dependabot/alerts"
-    val request = Gigahorse.url(snapshotUrl).get.addHeaders("Authorization" -> s"token ${getGithubTokenFromGhConfigDir()}")
+    val request =
+      Gigahorse.url(snapshotUrl).get.addHeaders("Authorization" -> s"token ${getGithubTokenFromGhConfigDir()}")
     state.log.info(s"Downloading alerts from $snapshotUrl")
     for {
       httpResp <- Try(Await.result(http.processFull(request), Duration.Inf))
@@ -166,13 +192,17 @@ object AnalyzeDependencyGraph {
     }
   }
 
-  private def getAllArtifacts(state: State): Seq[String] = {
-    state.get(githubManifestsKey).toSeq.flatMap { manifests =>
-      manifests.flatMap { case (_, manifest) =>
-        manifest.resolved.values.toSeq.map(_.package_url)
+  private def getAllArtifacts(state: State): Seq[String] =
+    state
+      .get(githubManifestsKey)
+      .toSeq
+      .flatMap { manifests =>
+        manifests.flatMap {
+          case (_, manifest) =>
+            manifest.resolved.values.toSeq.map(_.package_url)
+        }
       }
-    }.distinct
-  }
+      .distinct
 
   private def translateToSemVer(string: String): String =
     string.replaceAll("([0-9]+)\\.([0-9]+)\\.([0-9]+)\\.([0-9]+)", "$1.$2.$3-$4")
@@ -190,12 +220,14 @@ object AnalyzeDependencyGraph {
     } else No
   }
 
-  private def vulnerabilityMatchesArtifacts(alert: Vulnerability, artifacts: Seq[String]): Map[Vulnerable, Seq[String]] = {
+  private def vulnerabilityMatchesArtifacts(
+      alert: Vulnerability,
+      artifacts: Seq[String]
+  ): Map[Vulnerable, Seq[String]] =
     artifacts.foldLeft(Map(Good -> Seq.empty[String], Bad -> Seq.empty[String])) { (acc, artifact) =>
       val res = vulnerabilityMatchesArtifact(alert, artifact)
       if (res != No) acc.updated(res, acc(res) :+ artifact) else acc
     }
-  }
 
   private def analyzeCves(state: State): State = {
     val vulnerabilities = state.get(githubAlertsKey).getOrElse(Seq.empty)
@@ -218,11 +250,11 @@ object AnalyzeDependencyGraph {
     val repoPattern = """(?:https://|git@)github\.com[:/](.+/.+)\.git""".r
     remoteUrl match {
       case repoPattern(repo) => Some(repo)
-      case _ => None
+      case _                 => None
     }
   }
 
-  private def analyzeDependencies(state: State, params: AnalysisParams): State = {
+  private def analyzeDependencies(state: State, params: AnalysisParams): State =
     params.action match {
       case AnalysisAction.Get | AnalysisAction.List =>
         params.arg.foreach(pattern => analyzeDependenciesInternal(state, params.action, pattern, pattern))
@@ -234,31 +266,36 @@ object AnalyzeDependencyGraph {
       case _ =>
         state
     }
-  }
 
   private def getVulnerabilities(httpResp: FullResponse): Try[Seq[Vulnerability]] = Try {
     httpResp.status match {
       case status if status / 100 == 2 =>
         val json: JArray = JsonParser.parseFromByteBuffer(httpResp.bodyAsByteBuffer).get.asInstanceOf[JArray]
         json.value.collect {
-          case obj: JObject if (obj.value.collectFirst { case JField("state", JString("open")) => true }.isDefined) =>
-            val securityVulnerability = obj.value.collectFirst { case JField("security_vulnerability", secVuln: JObject) => secVuln }.get.value
-            val packageObj = securityVulnerability.collectFirst { case JField("package", pkg: JObject) => pkg }.get.value
-            val firstPatchedVersion = securityVulnerability.collectFirst {
-              case JField("first_patched_version", firstPatched: JObject) => firstPatched
-            }.map(_.value.collectFirst { case JField("identifier", JString(ident)) => ident }.getOrElse("")).getOrElse("")
+          case obj: JObject if obj.value.collectFirst { case JField("state", JString("open")) => true }.isDefined =>
+            val securityVulnerability =
+              obj.value.collectFirst { case JField("security_vulnerability", secVuln: JObject) => secVuln }.get.value
+            val packageObj =
+              securityVulnerability.collectFirst { case JField("package", pkg: JObject) => pkg }.get.value
+            val firstPatchedVersion = securityVulnerability
+              .collectFirst { case JField("first_patched_version", firstPatched: JObject) => firstPatched }
+              .map(_.value.collectFirst { case JField("identifier", JString(ident)) => ident }.getOrElse(""))
+              .getOrElse("")
             Vulnerability(
               packageObj.collectFirst { case JField("name", JString(name)) => name }.get,
-              securityVulnerability.collectFirst { case JField("vulnerable_version_range", JString(range)) => range }.get,
+              securityVulnerability.collectFirst {
+                case JField("vulnerable_version_range", JString(range)) => range
+              }.get,
               firstPatchedVersion,
               securityVulnerability.collectFirst { case JField("severity", JString(sev)) => sev }.get
             )
         }
       case _ =>
-        val message = s"Unexpected status ${httpResp.status} ${httpResp.statusText} with body:\n${httpResp.bodyAsString}"
+        val message =
+          s"Unexpected status ${httpResp.status} ${httpResp.statusText} with body:\n${httpResp.bodyAsString}"
         throw new MessageOnlyException(message)
     }
   }
 
-  private def githubToken(): String = Properties.envOrElse("GITHUB_TOKEN", "") 
+  private def githubToken(): String = Properties.envOrElse("GITHUB_TOKEN", "")
 }
