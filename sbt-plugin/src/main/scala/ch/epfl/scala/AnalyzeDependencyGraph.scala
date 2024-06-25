@@ -107,6 +107,15 @@ object AnalyzeDependencyGraph {
   private def highlight(string: String, pattern: String): String =
     string.replaceAll(pattern, s"\u001b[32m${pattern}\u001b[0m")
 
+  private def getStateOrWarn[T](state: State, key: AttributeKey[T], what: String, command: String): Option[T] =
+    state.get(key).orElse {
+      println(s"🟠 No $what found, please run '$command' first")
+      None
+    }
+
+  private def getGithubManifest(state: State): Seq[Map[String, Manifest]] =
+    getStateOrWarn(state, githubManifestsKey, "dependencies", SubmitDependencyGraph.Generate).toSeq
+
   private def analyzeDependenciesInternal(
       state: State,
       action: AnalysisAction,
@@ -135,9 +144,7 @@ object AnalyzeDependencyGraph {
           }
       }
 
-    val matches = state
-      .get(githubManifestsKey)
-      .toSeq
+    val matches = getGithubManifest(state)
       .flatMap { manifests =>
         manifests.map {
           case (name, manifest) =>
@@ -193,9 +200,7 @@ object AnalyzeDependencyGraph {
   }
 
   private def getAllArtifacts(state: State): Seq[String] =
-    state
-      .get(githubManifestsKey)
-      .toSeq
+    getGithubManifest(state)
       .flatMap { manifests =>
         manifests.flatMap {
           case (_, manifest) =>
@@ -231,7 +236,7 @@ object AnalyzeDependencyGraph {
     }
 
   private def analyzeCves(state: State): State = {
-    val vulnerabilities = state.get(githubAlertsKey).getOrElse(Seq.empty)
+    val vulnerabilities = getStateOrWarn(state, githubAlertsKey, "artifcats", s"${AnalyzeDependencies} alerts").getOrElse(Seq.empty)
     val artifacts = getAllArtifacts(state)
     vulnerabilities.foreach { v =>
       val matches = vulnerabilityMatchesArtifacts(v, artifacts)
@@ -298,5 +303,5 @@ object AnalyzeDependencyGraph {
     }
   }
 
-  private def githubToken(): String = Properties.envOrElse("GITHUB_TOKEN", "")
+  private def githubToken( ): String = Properties.envOrElse("GITHUB_TOKEN", "")
 }
