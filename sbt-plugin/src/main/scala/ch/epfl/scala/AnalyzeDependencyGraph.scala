@@ -204,8 +204,9 @@ object AnalyzeDependencyGraph {
       }
       .distinct
 
-  private def translateToSemVer(string: String): String =
-    string.replaceAll("([0-9]+)\\.([0-9]+)\\.([0-9]+)\\.([0-9]+)", "$1.$2.$3-$4")
+      private def translateToSemVer(string: String): String =
+        string.replaceAll("([a-zA-Z]+)", "0").replaceAll("([0-9]+)\\.([0-9]+)\\.([0-9]+)\\.([0-9]+)", "$1.$2.$3-$4")
+
 
   private def versionMatchesRange(versionStr: String, rangeStr: String): Boolean = {
     val range = rangeStr.replaceAll(" ", "").replace(",", " ")
