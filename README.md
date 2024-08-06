@@ -51,6 +51,17 @@ A list of space-separated names of configurations to ignore. The action will not
 
 Example of configurations are `compile`, `test`, `scala-tool`, `scala-doc-tool`.
 
+### - `correlator` (optional)
+
+An optional identifier to distinguish between multiple dependency snapshots of the same type.
+Defaults to the concatenation of the workflow name, the job id and the action id.
+
+Typically you would specify the correlator in a matrix-based job like this:
+
+```yaml
+  correlator: ${{ github.job }}-${{ matrix.directory }}
+```
+
 #### - `token` (optional)
 
 GitHub Personal Access Token (PAT). Defaults to PAT provided by Action runner.
