@@ -49,7 +49,9 @@ async function run(): Promise<void> {
     }
 
     const correlatorInput = core.getInput('correlator')
-    const correlator = correlatorInput ? correlatorInput : `${github.context.workflow}_${github.context.job}_${github.context.action}`
+    const correlator = correlatorInput
+      ? correlatorInput
+      : `${github.context.workflow}_${github.context.job}_${github.context.action}`
 
     const input = { ignoredModules, ignoredConfigs, onResolveFailure, correlator }
 
