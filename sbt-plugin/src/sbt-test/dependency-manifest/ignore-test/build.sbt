@@ -17,7 +17,7 @@ inThisBuild(
 )
 
 Global / ignoreTestConfig := {
-  val input = DependencySnapshotInput(None, Vector.empty, ignoredConfigs = Vector("test"))
+  val input = DependencySnapshotInput(None, Vector.empty, ignoredConfigs = Vector("test"), correlator = None)
   StateTransform(state => state.put(githubSnapshotInputKey, input))
 }
 

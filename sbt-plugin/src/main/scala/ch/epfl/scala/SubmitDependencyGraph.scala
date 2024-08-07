@@ -42,7 +42,7 @@ object SubmitDependencyGraph {
   private def inputParser(state: State): Parser[DependencySnapshotInput] =
     Parsers.any.*.map { raw =>
       val rawString = raw.mkString
-      if (rawString.isEmpty) DependencySnapshotInput(None, Vector.empty, Vector.empty)
+      if (rawString.isEmpty) DependencySnapshotInput(None, Vector.empty, Vector.empty, Some(""))
       else
         JsonParser
           .parseFromString(rawString)
@@ -82,7 +82,8 @@ object SubmitDependencyGraph {
   }
 
   private def generateInternal(state: State): State = {
-    val snapshot = githubDependencySnapshot(state)
+    val input = state.attributes(githubSnapshotInputKey)
+    val snapshot = githubDependencySnapshot(state, input.correlator.getOrElse(""))
     val snapshotJson = CompactPrinter(Converter.toJsonUnsafe(snapshot))
     val snapshotJsonFile = IO.withTemporaryFile("dependency-snapshot-", ".json", keepFile = true) { file =>
       IO.write(file, snapshotJson)
@@ -103,7 +104,8 @@ object SubmitDependencyGraph {
         )
       )
     val snapshotUrl = s"${githubApiUrl()}/repos/${githubRepository()}/dependency-graph/snapshots"
-    val job = githubJob()
+    val input = state.attributes(githubSnapshotInputKey)
+    val job = githubJob(input.correlator.getOrElse(""))
     val request = Gigahorse
       .url(snapshotUrl)
       .post(snapshotJsonFile)
@@ -145,7 +147,7 @@ object SubmitDependencyGraph {
         throw new MessageOnlyException(message)
     }
 
-  private def githubDependencySnapshot(state: State): DependencySnapshot = {
+  private def githubDependencySnapshot(state: State, correlator: String): DependencySnapshot = {
     val detector = DetectorMetadata(
       SbtGithubDependencySubmission.name,
       SbtGithubDependencySubmission.homepage.map(_.toString).getOrElse(""),
@@ -155,7 +157,7 @@ object SubmitDependencyGraph {
     val manifests = state.get(githubManifestsKey).get
     DependencySnapshot(
       0,
-      githubJob(),
+      githubJob(correlator),
       githubSha(),
       githubRef(),
       detector,
@@ -165,8 +167,7 @@ object SubmitDependencyGraph {
     )
   }
 
-  private def githubJob(): Job = {
-    val correlator = s"${githubWorkflow()}_${githubJobName()}_${githubAction()}"
+  private def githubJob(correlator: String): Job = {
     val id = githubRunId
     val html_url =
       for {
@@ -181,9 +182,6 @@ object SubmitDependencyGraph {
       throw new MessageOnlyException(s"Missing environment variable $name. This task must run in a Github Action.")
     }
     check("GITHUB_WORKSPACE")
-    check("GITHUB_WORKFLOW")
-    check("GITHUB_JOB")
-    check("GITHUB_ACTION")
     check("GITHUB_RUN_ID")
     check("GITHUB_SHA")
     check("GITHUB_REF")
@@ -194,9 +192,6 @@ object SubmitDependencyGraph {
   }
 
   private def githubWorkspace(): String = Properties.envOrElse("GITHUB_WORKSPACE", "")
-  private def githubWorkflow(): String = Properties.envOrElse("GITHUB_WORKFLOW", "")
-  private def githubJobName(): String = Properties.envOrElse("GITHUB_JOB", "")
-  private def githubAction(): String = Properties.envOrElse("GITHUB_ACTION", "")
   private def githubRunId(): String = Properties.envOrElse("GITHUB_RUN_ID", "")
   private def githubSha(): String = Properties.envOrElse("GITHUB_SHA", "")
   private def githubRef(): String = Properties.envOrElse("GITHUB_REF", "")

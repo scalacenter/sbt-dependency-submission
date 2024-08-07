@@ -23,4 +23,7 @@ type DependencySnapshotInput {
   ##  - "scala-doc-tool" to ignore the scaladoc dependencies
   ##  - "scala-tool" to ignore the compiler dependencies
   ignoredConfigs: [String]
+
+  ## The job correlator of the snapshot
+  correlator: String
 }
