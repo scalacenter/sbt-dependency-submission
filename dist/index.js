@@ -80,7 +80,9 @@ function run() {
                 return;
             }
             const correlatorInput = core.getInput('correlator');
-            const correlator = correlatorInput ? correlatorInput : `${github.context.workflow}_${github.context.job}_${github.context.action}`;
+            const correlator = correlatorInput
+                ? correlatorInput
+                : `${github.context.workflow}_${github.context.job}_${github.context.action}`;
             const input = { ignoredModules, ignoredConfigs, onResolveFailure, correlator };
             if (github.context.eventName === 'pull_request') {
                 core.info('pull request, resetting sha');
