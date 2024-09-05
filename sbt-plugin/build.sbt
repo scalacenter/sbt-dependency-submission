@@ -27,7 +27,7 @@ val `sbt-github-dependency-submission` = project
   .settings(
     name := "sbt-github-dependency-submission",
     sbtVersion := "1.5.8",
-    scalaVersion := "2.12.19",
+    scalaVersion := "2.12.20",
     scalacOptions ++= Seq(
       "-deprecation",
       "-encoding",
