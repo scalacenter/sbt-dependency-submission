@@ -11,7 +11,7 @@ inThisBuild(
     version := "1.2.0-SNAPSHOT",
     // use Ivy because Coursier does not allow several classifier on the same dep
     useCoursier := false,
-    scalaVersion := "2.12.20"
+    scalaVersion := "2.13.15"
   )
 )
 
