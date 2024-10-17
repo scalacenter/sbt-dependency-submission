@@ -43,6 +43,10 @@ inputs:
     description: Version of the sbt plugin to use.
     required: false
     default: '3.1.0'
+  submit-graph:
+    description: Submit dependency graph or no
+    required: false
+    default: 'yes'
 outputs:
   submission-id:
     description: The ID of the submission created by the action
