@@ -4,17 +4,22 @@ import java.nio.file.Paths
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import scala.util.{Properties, Try}
+import scala.sys.process._
+import scala.util.Properties
+import scala.util.Try
+
 import ch.epfl.scala.GithubDependencyGraphPlugin.autoImport._
 import ch.epfl.scala.githubapi._
+import gigahorse.FullResponse
+import gigahorse.HttpClient
 import gigahorse.support.asynchttpclient.Gigahorse
 import sbt._
 import sbt.internal.util.complete._
-import sjsonnew.shaded.scalajson.ast.unsafe.{JArray, JObject, JField, JString}
-import gigahorse.{FullResponse, HttpClient}
+import sjsonnew.shaded.scalajson.ast.unsafe.JArray
+import sjsonnew.shaded.scalajson.ast.unsafe.JField
+import sjsonnew.shaded.scalajson.ast.unsafe.JObject
+import sjsonnew.shaded.scalajson.ast.unsafe.JString
 import sjsonnew.support.scalajson.unsafe.{Parser => JsonParser}
-
-import scala.sys.process._
 
 object AnalyzeDependencyGraph {
 
@@ -139,18 +144,15 @@ object AnalyzeDependencyGraph {
   }
 
   private def getAllArtifacts(state: State): Seq[String] =
-    getGithubManifest(state)
-      .flatMap { manifests =>
-        manifests.flatMap {
-          case (_, manifest) =>
-            manifest.resolved.values.toSeq.map(_.package_url)
-        }
+    getGithubManifest(state).flatMap { manifests =>
+      manifests.flatMap {
+        case (_, manifest) =>
+          manifest.resolved.values.toSeq.map(_.package_url)
       }
-      .distinct
+    }.distinct
 
-      private def translateToSemVer(string: String): String =
-        string.replaceAll("([a-zA-Z]+)", "0").replaceAll("([0-9]+)\\.([0-9]+)\\.([0-9]+)\\.([0-9]+)", "$1.$2.$3-$4")
-
+  private def translateToSemVer(string: String): String =
+    string.replaceAll("([a-zA-Z]+)", "0").replaceAll("([0-9]+)\\.([0-9]+)\\.([0-9]+)\\.([0-9]+)", "$1.$2.$3-$4")
 
   private def versionMatchesRange(versionStr: String, rangeStr: String): Boolean = {
     val range = rangeStr.replaceAll(" ", "").replace(",", " ")
@@ -175,7 +177,8 @@ object AnalyzeDependencyGraph {
     }
 
   private def analyzeCves(state: State): State = {
-    val vulnerabilities = getStateOrWarn(state, githubAlertsKey, "artifcats", s"${AnalyzeDependencies} alerts").getOrElse(Seq.empty)
+    val vulnerabilities =
+      getStateOrWarn(state, githubAlertsKey, "artifcats", s"${AnalyzeDependencies} alerts").getOrElse(Seq.empty)
     val artifacts = getAllArtifacts(state)
     vulnerabilities.foreach { v =>
       val matches = vulnerabilityMatchesArtifacts(v, artifacts)
@@ -239,5 +242,5 @@ object AnalyzeDependencyGraph {
     }
   }
 
-  private def githubToken( ): String = Properties.envOrElse("GITHUB_TOKEN", "")
+  private def githubToken(): String = Properties.envOrElse("GITHUB_TOKEN", "")
 }
