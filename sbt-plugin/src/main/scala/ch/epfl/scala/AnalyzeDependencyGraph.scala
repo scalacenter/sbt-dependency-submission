@@ -25,14 +25,6 @@ object AnalyzeDependencyGraph {
     }
 
     object AnalysisAction {
-      case object Get extends AnalysisAction {
-        val name = "get"
-        val help = "search for a pattern in the dependencies (requires githubGenerateSnapshot)"
-      }
-      case object List extends AnalysisAction {
-        val name = "list"
-        val help = "list all dependencies matching a pattern (requires githubGenerateSnapshot)"
-      }
       case object Alerts extends AnalysisAction {
         val name = "alerts"
         val help =
@@ -44,7 +36,7 @@ object AnalyzeDependencyGraph {
           "analyze CVEs alerts against the dependencies (requires githubGenerateSnapshot and githubAnalyzeDependencies alerts)"
       }
 
-      val values: Seq[AnalysisAction] = Seq(Get, List, Alerts, Cves)
+      val values: Seq[AnalysisAction] = Seq(Alerts, Cves)
 
       def fromString(str: String): Option[AnalysisAction] = values.find(_.name == str)
     }
@@ -104,67 +96,14 @@ object AnalyzeDependencyGraph {
       }
     }.failOnException
 
-  private def highlight(string: String, pattern: String): String =
-    string.replaceAll(pattern, s"\u001b[32m${pattern}\u001b[0m")
-
   private def getStateOrWarn[T](state: State, key: AttributeKey[T], what: String, command: String): Option[T] =
     state.get(key).orElse {
       println(s"🟠 No $what found, please run '$command' first")
       None
     }
 
-  private def getGithubManifest(state: State): Seq[Map[String, Manifest]] =
+  def getGithubManifest(state: State): Seq[Map[String, Manifest]] =
     getStateOrWarn(state, githubManifestsKey, "dependencies", SubmitDependencyGraph.Generate).toSeq
-
-  private def analyzeDependenciesInternal(
-      state: State,
-      action: AnalysisAction,
-      pattern: String,
-      originalPattern: String
-  ): Unit = {
-    def getDeps(dependencies: Seq[String], pattern: String): Seq[String] =
-      dependencies.filter(_.contains(pattern)).map(highlight(_, originalPattern))
-
-    def resolvedDeps(
-        tabs: String,
-        acc: Seq[String],
-        resolvedByName: Map[String, DependencyNode],
-        pattern: String,
-        originalPattern: String
-    ): Seq[String] =
-      acc ++ resolvedByName.toSeq.flatMap {
-        case (name, resolved) =>
-          val matchingDependencies = getDeps(resolved.dependencies, pattern)
-          if (matchingDependencies.isEmpty) {
-            if (name.contains(pattern)) Seq(tabs + highlight(name, originalPattern)) else Nil
-          } else {
-            matchingDependencies.flatMap { matchingDependency =>
-              resolvedDeps("  " + tabs, acc :+ (tabs + matchingDependency), resolvedByName, name, originalPattern)
-            }
-          }
-      }
-
-    val matches = getGithubManifest(state)
-      .flatMap { manifests =>
-        manifests.map {
-          case (name, manifest) =>
-            manifest -> resolvedDeps("", Nil, manifest.resolved, pattern, originalPattern = pattern)
-        }
-      }
-      .toMap
-
-    action match {
-      case AnalysisAction.Get =>
-        matches.foreach {
-          case (manifest, deps) =>
-            println(s"📁 ${blue(manifest.name)}")
-            println(deps.map(dep => s"  $dep").mkString("\n"))
-        }
-      case AnalysisAction.List =>
-        println(matches.values.flatten.filter(_.contains(pattern)).toSet.mkString("\n"))
-      case _ =>
-    }
-  }
 
   private def getGithubToken(ghConfigFile: File): Option[String] = {
     println(s"Extract token from ${ghConfigFile.getPath}")
@@ -262,9 +201,6 @@ object AnalyzeDependencyGraph {
 
   private def analyzeDependencies(state: State, params: AnalysisParams): State =
     params.action match {
-      case AnalysisAction.Get | AnalysisAction.List =>
-        params.arg.foreach(pattern => analyzeDependenciesInternal(state, params.action, pattern, pattern))
-        state
       case AnalysisAction.Alerts =>
         params.arg.orElse(getGitHubRepo).map(repo => downloadAlerts(state, repo).get).getOrElse(state)
       case AnalysisAction.Cves =>
