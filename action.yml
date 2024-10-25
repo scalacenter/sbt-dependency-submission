@@ -22,6 +22,12 @@ inputs:
       Example: `test scala-doc-tool`
     required: false
     default: ''
+  correlator:
+    description: |
+      An optional identifier to distinguish between multiple dependency snapshots of the same type.
+      Defaults to the concatenation of the workflow name, the job id and the action id.
+    required: false
+    default: ''
   on-resolve-failure:
     description: |
       Either 'error' or 'warning'.
@@ -36,7 +42,7 @@ inputs:
   sbt-plugin-version:
     description: Version of the sbt plugin to use.
     required: false
-    default: '3.0.1'
+    default: '3.1.0'
 outputs:
   submission-id:
     description: The ID of the submission created by the action

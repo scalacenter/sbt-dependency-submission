@@ -17,17 +17,17 @@ inThisBuild(
 )
 
 Global / ignoreTestConfig := {
-  val input = DependencySnapshotInput(None, Vector.empty, ignoredConfigs = Vector("test"))
+  val input = DependencySnapshotInput(None, Vector.empty, ignoredConfigs = Vector("test"), correlator = None)
   StateTransform(state => state.put(githubSnapshotInputKey, input))
 }
 
 lazy val p1 = project
   .in(file("p1"))
   .settings(
-    libraryDependencies += "org.scalameta" %% "munit" % "1.0.0" % Test,
+    libraryDependencies += "org.scalameta" %% "munit" % "1.0.2" % Test,
     checkTest := {
       val manifest = githubDependencyManifest.value.get
-      checkDependency(manifest, "org.scalameta:munit_3:1.0.0")(
+      checkDependency(manifest, "org.scalameta:munit_3:1.0.2")(
         expectedRelationship = DependencyRelationship.direct,
         expectedScope = DependencyScope.development,
         expectedConfig = "test"

@@ -51,6 +51,17 @@ A list of space-separated names of configurations to ignore. The action will not
 
 Example of configurations are `compile`, `test`, `scala-tool`, `scala-doc-tool`.
 
+### - `correlator` (optional)
+
+An optional identifier to distinguish between multiple dependency snapshots of the same type.
+Defaults to the concatenation of the workflow name, the job id and the action id.
+
+Typically you would specify the correlator in a matrix-based job like this:
+
+```yaml
+  correlator: ${{ github.job }}-${{ matrix.directory }}
+```
+
 #### - `token` (optional)
 
 GitHub Personal Access Token (PAT). Defaults to PAT provided by Action runner.
@@ -115,7 +126,7 @@ To do so you need to install the `sbt-dependency-submission` plugin in your sbt 
 
 ```scala
 // In project/plugins.sbt
-addSbtPlugin("ch.epfl.scala" % "sbt-github-dependency-submission" % "3.0.0")
+addSbtPlugin("ch.epfl.scala" % "sbt-github-dependency-submission" % "3.1.0")
 ```
 
 After reloading your build, you can run:
