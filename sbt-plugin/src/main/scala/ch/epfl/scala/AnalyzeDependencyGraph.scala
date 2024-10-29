@@ -24,27 +24,8 @@ import sjsonnew.support.scalajson.unsafe.{Parser => JsonParser}
 object AnalyzeDependencyGraph {
 
   object Model {
-    sealed trait AnalysisAction {
-      def name: String
-      def help: String
-    }
-
-    object AnalysisAction {
-      case object Alerts extends AnalysisAction {
-        val name = "alerts"
-        val help =
-          "download and display CVEs alerts from Github (use hub or gh local config or GIT_TOKEN env var to authenticate)"
-      }
-      case object Cves extends AnalysisAction {
-        val name = "cves"
-        val help =
-          "analyze CVEs alerts against the dependencies (requires githubGenerateSnapshot and githubAnalyzeDependencies alerts)"
-      }
-
-      val values: Seq[AnalysisAction] = Seq(Alerts, Cves)
-
-      def fromString(str: String): Option[AnalysisAction] = values.find(_.name == str)
-    }
+    val help =
+      "download and display CVEs alerts from Github, and analyze them against dependencies (use hub or gh local config or GIT_TOKEN env var to authenticate, requires githubGenerateSnapshot and githubAnalyzeDependencies alerts)"
 
     def blue(str: String): String = s"\u001b[34m${str}\u001b[0m"
 
@@ -68,7 +49,7 @@ object AnalyzeDependencyGraph {
         s"${blue(packageId)} [ $vulnerableVersionRange ] fixed: $firstPatchedVersion $coloredSeverity"
     }
 
-    case class AnalysisParams(action: AnalysisAction, arg: Option[String])
+    case class AnalysisParams(arg: Option[String])
 
     sealed trait Vulnerable
     object Good extends Vulnerable
@@ -80,9 +61,9 @@ object AnalyzeDependencyGraph {
 
   val AnalyzeDependencies = "githubAnalyzeDependencies"
   private val AnalyzeDependenciesUsage =
-    s"""$AnalyzeDependencies [${AnalysisAction.values.map(_.name).mkString("|")}] [pattern]"""
+    s"""$AnalyzeDependencies [pattern]"""
   private val AnalyzeDependenciesDetail = s"""Analyze the dependencies based on a search pattern:
-  ${AnalysisAction.values.map(a => s"${a.name}: ${a.help}").mkString("\n  ")}
+  $help
   """
 
   val commands: Seq[Command] = Seq(
@@ -96,8 +77,8 @@ object AnalyzeDependencyGraph {
   private def extractPattern(state: State): Parser[AnalysisParams] =
     Parsers.any.*.map { raw =>
       raw.mkString.trim.split(" ").toSeq match {
-        case Seq(action, arg) => AnalysisParams(AnalysisAction.fromString(action).get, Some(arg))
-        case Seq(action)      => AnalysisParams(AnalysisAction.fromString(action).get, None)
+        case Seq("") | Nil => AnalysisParams(None)
+        case Seq(arg)      => AnalysisParams(Some(arg))
       }
     }.failOnException
 
@@ -138,7 +119,7 @@ object AnalyzeDependencyGraph {
       httpResp <- Try(Await.result(http.processFull(request), Duration.Inf))
       vulnerabilities <- getVulnerabilities(httpResp)
     } yield {
-      vulnerabilities.foreach(v => println(v.toString))
+      state.log.info(s"Downloaded ${vulnerabilities.size} alerts")
       state.put(githubAlertsKey, vulnerabilities)
     }
   }
@@ -203,14 +184,7 @@ object AnalyzeDependencyGraph {
   }
 
   private def analyzeDependencies(state: State, params: AnalysisParams): State =
-    params.action match {
-      case AnalysisAction.Alerts =>
-        params.arg.orElse(getGitHubRepo).map(repo => downloadAlerts(state, repo).get).getOrElse(state)
-      case AnalysisAction.Cves =>
-        analyzeCves(state)
-      case _ =>
-        state
-    }
+    analyzeCves(params.arg.orElse(getGitHubRepo).map(repo => downloadAlerts(state, repo).get).getOrElse(state))
 
   private def getVulnerabilities(httpResp: FullResponse): Try[Seq[Vulnerability]] = Try {
     httpResp.status match {
