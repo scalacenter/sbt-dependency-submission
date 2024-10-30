@@ -25,7 +25,7 @@ object AnalyzeDependencyGraph {
 
   object Model {
     val help =
-      "download and display CVEs alerts from Github, and analyze them against dependencies (use hub or gh local config or GIT_TOKEN env var to authenticate, requires githubGenerateSnapshot and githubAnalyzeDependencies alerts)"
+      "download and display CVEs alerts from Github, and analyze them against dependencies (use hub or gh local config or GIT_TOKEN env var to authenticate, requires githubGenerateSnapshot)"
 
     def blue(str: String): String = s"\u001b[34m${str}\u001b[0m"
 
