@@ -2,10 +2,13 @@ package ch.epfl.scala
 
 import java.nio.file.Paths
 
+import scala.Console
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.sys.process._
+import scala.util.Failure
 import scala.util.Properties
+import scala.util.Success
 import scala.util.Try
 
 import ch.epfl.scala.GithubDependencyGraphPlugin.autoImport._
@@ -20,8 +23,6 @@ import sjsonnew.shaded.scalajson.ast.unsafe.JField
 import sjsonnew.shaded.scalajson.ast.unsafe.JObject
 import sjsonnew.shaded.scalajson.ast.unsafe.JString
 import sjsonnew.support.scalajson.unsafe.{Parser => JsonParser}
-import scala.Console
-import scala.util.{ Success, Failure }
 
 object AnalyzeDependencyGraph {
 
