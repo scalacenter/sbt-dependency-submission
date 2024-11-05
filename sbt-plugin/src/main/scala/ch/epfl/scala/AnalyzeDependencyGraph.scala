@@ -31,11 +31,6 @@ object AnalyzeDependencyGraph {
 
   case class AnalysisParams(repository: Option[String])
 
-  sealed trait Vulnerable
-  object Good extends Vulnerable
-  object Bad extends Vulnerable
-  object No extends Vulnerable
-
   val AnalyzeDependencies = "githubAnalyzeDependencies"
   private val AnalyzeDependenciesUsage =
     s"""$AnalyzeDependencies [pattern]"""
