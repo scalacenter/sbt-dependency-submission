@@ -163,15 +163,15 @@ object AnalyzeDependencyGraph {
   private def vulnerabilityMatchesArtifacts(
       alert: Vulnerability,
       artifacts: Seq[String]
-    ): (Seq[String], Seq[String]) = {
-      val alertMavenPath = s"pkg:maven/${alert.packageId.replace(":", "/")}@"
-      artifacts
-        .filter(_.startsWith(alertMavenPath))
-        .partition { artifact =>
-          val version = artifact.replaceAll(".*@", "")
-          versionMatchesRange(version, alert.vulnerableVersionRange)
-        }
-    }
+  ): (Seq[String], Seq[String]) = {
+    val alertMavenPath = s"pkg:maven/${alert.packageId.replace(":", "/")}@"
+    artifacts
+      .filter(_.startsWith(alertMavenPath))
+      .partition { artifact =>
+        val version = artifact.replaceAll(".*@", "")
+        versionMatchesRange(version, alert.vulnerableVersionRange)
+      }
+  }
 
   def getGitHubRepo: Option[String] = {
     val remoteUrl = "git config --get remote.origin.url".!!.trim
