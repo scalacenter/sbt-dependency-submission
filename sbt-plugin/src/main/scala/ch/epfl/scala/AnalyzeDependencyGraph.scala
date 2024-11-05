@@ -20,44 +20,20 @@ import sjsonnew.shaded.scalajson.ast.unsafe.JField
 import sjsonnew.shaded.scalajson.ast.unsafe.JObject
 import sjsonnew.shaded.scalajson.ast.unsafe.JString
 import sjsonnew.support.scalajson.unsafe.{Parser => JsonParser}
+import scala.Console
+import scala.util.{ Success, Failure }
 
 object AnalyzeDependencyGraph {
 
-  object Model {
-    val help =
-      "download and display CVEs alerts from Github, and analyze them against dependencies (use hub or gh local config or GIT_TOKEN env var to authenticate, requires githubGenerateSnapshot)"
+  val help =
+    "download and display CVEs alerts from Github, and analyze them against dependencies (use hub or gh local config or GIT_TOKEN env var to authenticate, requires githubGenerateSnapshot)"
 
-    def blue(str: String): String = s"\u001b[34m${str}\u001b[0m"
+  case class AnalysisParams(repository: Option[String])
 
-    case class Vulnerability(
-        packageId: String,
-        vulnerableVersionRange: String,
-        firstPatchedVersion: String,
-        severity: String
-    ) {
-      def severityColor: String = severity match {
-        case "critical" => "\u001b[31m"
-        case "high"     => "\u001b[31m"
-        case "medium"   => "\u001b[33m"
-        case "low"      => "\u001b[32m"
-        case _          => "\u001b[0m"
-      }
-
-      def coloredSeverity: String = s"${severityColor}${severity}\u001b[0m"
-
-      override def toString: String =
-        s"${blue(packageId)} [ $vulnerableVersionRange ] fixed: $firstPatchedVersion $coloredSeverity"
-    }
-
-    case class AnalysisParams(arg: Option[String])
-
-    sealed trait Vulnerable
-    object Good extends Vulnerable
-    object Bad extends Vulnerable
-    object No extends Vulnerable
-  }
-
-  import Model._
+  sealed trait Vulnerable
+  object Good extends Vulnerable
+  object Bad extends Vulnerable
+  object No extends Vulnerable
 
   val AnalyzeDependencies = "githubAnalyzeDependencies"
   private val AnalyzeDependenciesUsage =
@@ -67,14 +43,13 @@ object AnalyzeDependencyGraph {
   """
 
   val commands: Seq[Command] = Seq(
-    Command(AnalyzeDependencies, (AnalyzeDependenciesUsage, AnalyzeDependenciesDetail), AnalyzeDependenciesDetail)(
-      extractPattern
-    )(analyzeDependencies)
+    Command(AnalyzeDependencies,
+      (AnalyzeDependenciesUsage, AnalyzeDependenciesDetail),
+      AnalyzeDependenciesDetail
+    )(parser)(analyzeDependencies)
   )
 
-  private lazy val http: HttpClient = Gigahorse.http(Gigahorse.config)
-
-  private def extractPattern(state: State): Parser[AnalysisParams] =
+  private def parser(state: State): Parser[AnalysisParams] =
     Parsers.any.*.map { raw =>
       raw.mkString.trim.split(" ").toSeq match {
         case Seq("") | Nil => AnalysisParams(None)
@@ -82,45 +57,96 @@ object AnalyzeDependencyGraph {
       }
     }.failOnException
 
+  private def analyzeDependencies(state: State, params: AnalysisParams) : State =
+    (for {
+      repo <- params.repository.orElse(getGitHubRepo)
+      vulnerabilities <- downloadAlerts(state, repo) match {
+        case Success(v) => Some(v)
+        case Failure(e) =>
+          state.log.error(s"Failed to download alerts: ${e.getMessage}")
+          None
+      }
+    } yield (analyzeCves(state, vulnerabilities))
+  ).getOrElse(state)
+
+  private def analyzeCves(state: State, vulnerabilities: Seq[Vulnerability]): State = {
+    val artifacts = getAllArtifacts(state)
+    vulnerabilities.foreach { v =>
+      val (goodMatches, badMatches) = vulnerabilityMatchesArtifacts(v, artifacts)
+      println(v.toString)
+      if (goodMatches.nonEmpty || badMatches.nonEmpty) {
+        goodMatches.foreach(m => println(s"    🟢 ${m.replaceAll(".*@", "")}"))
+        badMatches.foreach(m => println(s"    🔴 ${m.replaceAll(".*@", "")}"))
+      } else {
+        println("    🎉 no match (dependency was probably removed)")
+      }
+    }
+    state
+  }
+
   private def getStateOrWarn[T](state: State, key: AttributeKey[T], what: String, command: String): Option[T] =
     state.get(key).orElse {
       println(s"🟠 No $what found, please run '$command' first")
       None
     }
 
-  def getGithubManifest(state: State): Seq[Map[String, Manifest]] =
-    getStateOrWarn(state, githubManifestsKey, "dependencies", SubmitDependencyGraph.Generate).toSeq
-
-  private def getGithubToken(ghConfigFile: File): Option[String] = {
-    println(s"Extract token from ${ghConfigFile.getPath}")
-    if (ghConfigFile.exists()) {
-      IO.readLines(ghConfigFile).find(_.contains("oauth_token")).map(_.split(":").last.trim)
-    } else None
-  }
-
-  private def getGithubTokenFromGhConfigDir(): String = {
-    val ghConfigDir =
-      Properties.envOrElse("GH_CONFIG_DIR", Paths.get(System.getProperty("user.home"), ".config", "gh").toString)
-    val ghConfigFile = Paths.get(ghConfigDir).resolve("hosts.yml").toFile
-    getGithubToken(ghConfigFile).getOrElse {
-      val ghConfigPath =
-        Properties.envOrElse("HUB_CONFIG", Paths.get(System.getProperty("user.home"), ".config", "hub").toString)
-      val hubConfigFile = Paths.get(ghConfigPath).toFile
-      getGithubToken(hubConfigFile).getOrElse(githubToken())
-    }
-  }
-
-  private def downloadAlerts(state: State, repo: String): Try[State] = {
+  private def downloadAlerts(state: State, repo: String): Try[Seq[Vulnerability]] = {
     val snapshotUrl = s"https://api.github.com/repos/$repo/dependabot/alerts"
     val request =
-      Gigahorse.url(snapshotUrl).get.addHeaders("Authorization" -> s"token ${getGithubTokenFromGhConfigDir()}")
+      Gigahorse.url(snapshotUrl).get.addHeaders("Authorization" -> s"token ${getGithubToken()}")
     state.log.info(s"Downloading alerts from $snapshotUrl")
     for {
       httpResp <- Try(Await.result(http.processFull(request), Duration.Inf))
       vulnerabilities <- getVulnerabilities(httpResp)
     } yield {
       state.log.info(s"Downloaded ${vulnerabilities.size} alerts")
-      state.put(githubAlertsKey, vulnerabilities)
+      vulnerabilities
+    }
+  }
+
+  case class Vulnerability(
+    packageId: String,
+    vulnerableVersionRange: String,
+    firstPatchedVersion: String,
+    severity: String
+  ) {
+    def severityColor: String = severity match {
+      case "critical" => Console.RED
+      case "high"     => Console.RED
+      case "medium"   => Console.YELLOW
+      case "low"      => Console.GREEN
+      case _          => Console.RESET
+    }
+
+    def coloredSeverity: String = s"${severityColor}${severity}${Console.RESET}"
+
+    def coloredPackageId: String = s"${Console.BLUE}$packageId${Console.RESET}"
+
+    override def toString: String =
+      s"${coloredPackageId} [ $vulnerableVersionRange ] fixed: $firstPatchedVersion $coloredSeverity"
+  }
+
+  private lazy val http: HttpClient = Gigahorse.http(Gigahorse.config)
+
+  def getGithubManifest(state: State): Seq[Map[String, Manifest]] =
+    getStateOrWarn(state, githubManifestsKey, "dependencies", SubmitDependencyGraph.Generate).toSeq
+
+  private def getGithubTokenFromFile(ghConfigFile: File): Option[String] = {
+    println(s"Extract token from ${ghConfigFile.getPath}")
+    if (ghConfigFile.exists()) {
+      IO.readLines(ghConfigFile).find(_.contains("oauth_token")).map(_.split(":").last.trim)
+    } else None
+  }
+
+  private def getGithubToken(): String = {
+    val ghConfigDir =
+      Properties.envOrElse("GH_CONFIG_DIR", Paths.get(System.getProperty("user.home"), ".config", "gh").toString)
+    val ghConfigFile = Paths.get(ghConfigDir).resolve("hosts.yml").toFile
+    getGithubTokenFromFile(ghConfigFile).getOrElse {
+      val ghConfigPath =
+        Properties.envOrElse("HUB_CONFIG", Paths.get(System.getProperty("user.home"), ".config", "hub").toString)
+      val hubConfigFile = Paths.get(ghConfigPath).toFile
+      getGithubTokenFromFile(hubConfigFile).getOrElse(githubToken())
     }
   }
 
@@ -140,38 +166,14 @@ object AnalyzeDependencyGraph {
     VersionNumber(translateToSemVer(versionStr)).matchesSemVer(SemanticSelector(translateToSemVer(range)))
   }
 
-  private def vulnerabilityMatchesArtifact(alert: Vulnerability, artifact: String): Vulnerable = {
+  private def vulnerabilityMatchesArtifacts(alert: Vulnerability, artifacts: Seq[String]): (Seq[String], Seq[String]) = {
     val alertMavenPath = s"pkg:maven/${alert.packageId.replace(":", "/")}@"
-    if (artifact.startsWith(alertMavenPath)) {
-      val version = artifact.replaceAll(".*@", "")
-      if (versionMatchesRange(version, alert.vulnerableVersionRange)) Bad else Good
-    } else No
-  }
-
-  private def vulnerabilityMatchesArtifacts(
-      alert: Vulnerability,
-      artifacts: Seq[String]
-  ): Map[Vulnerable, Seq[String]] =
-    artifacts.foldLeft(Map(Good -> Seq.empty[String], Bad -> Seq.empty[String])) { (acc, artifact) =>
-      val res = vulnerabilityMatchesArtifact(alert, artifact)
-      if (res != No) acc.updated(res, acc(res) :+ artifact) else acc
-    }
-
-  private def analyzeCves(state: State): State = {
-    val vulnerabilities =
-      getStateOrWarn(state, githubAlertsKey, "artifcats", s"${AnalyzeDependencies} alerts").getOrElse(Seq.empty)
-    val artifacts = getAllArtifacts(state)
-    vulnerabilities.foreach { v =>
-      val matches = vulnerabilityMatchesArtifacts(v, artifacts)
-      println(v.toString)
-      if (matches(Good).nonEmpty || matches(Bad).nonEmpty) {
-        matches(Good).foreach(m => println(s"    🟢 ${m.replaceAll(".*@", "")}"))
-        matches(Bad).foreach(m => println(s"    🔴 ${m.replaceAll(".*@", "")}"))
-      } else {
-        println("    🎉 no match (dependency was probably removed)")
+    artifacts
+      .filter(_.startsWith(alertMavenPath))
+      .partition { artifact =>
+        val version = artifact.replaceAll(".*@", "")
+        versionMatchesRange(version, alert.vulnerableVersionRange)
       }
-    }
-    state
   }
 
   def getGitHubRepo: Option[String] = {
@@ -182,9 +184,6 @@ object AnalyzeDependencyGraph {
       case _                 => None
     }
   }
-
-  private def analyzeDependencies(state: State, params: AnalysisParams): State =
-    analyzeCves(params.arg.orElse(getGitHubRepo).map(repo => downloadAlerts(state, repo).get).getOrElse(state))
 
   private def getVulnerabilities(httpResp: FullResponse): Try[Seq[Vulnerability]] = Try {
     httpResp.status match {
@@ -216,5 +215,5 @@ object AnalyzeDependencyGraph {
     }
   }
 
-  private def githubToken(): String = Properties.envOrElse("GITHUB_TOKEN", "")
+   private def githubToken(): String = Properties.envOrElse("GITHUB_TOKEN", "")
 }
