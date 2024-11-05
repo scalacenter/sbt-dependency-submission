@@ -39,10 +39,9 @@ object AnalyzeDependencyGraph {
   """
 
   val commands: Seq[Command] = Seq(
-    Command(AnalyzeDependencies,
-      (AnalyzeDependenciesUsage, AnalyzeDependenciesDetail),
-      AnalyzeDependenciesDetail
-    )(parser)(analyzeDependencies)
+    Command(AnalyzeDependencies, (AnalyzeDependenciesUsage, AnalyzeDependenciesDetail), AnalyzeDependenciesDetail)(
+      parser
+    )(analyzeDependencies)
   )
 
   private def parser(state: State): Parser[AnalysisParams] =
@@ -53,7 +52,7 @@ object AnalyzeDependencyGraph {
       }
     }.failOnException
 
-  private def analyzeDependencies(state: State, params: AnalysisParams) : State =
+  private def analyzeDependencies(state: State, params: AnalysisParams): State =
     (for {
       repo <- params.repository.orElse(getGitHubRepo)
       vulnerabilities <- downloadAlerts(state, repo) match {
@@ -62,8 +61,7 @@ object AnalyzeDependencyGraph {
           state.log.error(s"Failed to download alerts: ${e.getMessage}")
           None
       }
-    } yield (analyzeCves(state, vulnerabilities))
-  ).getOrElse(state)
+    } yield analyzeCves(state, vulnerabilities)).getOrElse(state)
 
   private def analyzeCves(state: State, vulnerabilities: Seq[Vulnerability]): State = {
     val artifacts = getAllArtifacts(state)
@@ -101,10 +99,10 @@ object AnalyzeDependencyGraph {
   }
 
   case class Vulnerability(
-    packageId: String,
-    vulnerableVersionRange: String,
-    firstPatchedVersion: String,
-    severity: String
+      packageId: String,
+      vulnerableVersionRange: String,
+      firstPatchedVersion: String,
+      severity: String
   ) {
     def severityColor: String = severity match {
       case "critical" => Console.RED
@@ -162,15 +160,18 @@ object AnalyzeDependencyGraph {
     VersionNumber(translateToSemVer(versionStr)).matchesSemVer(SemanticSelector(translateToSemVer(range)))
   }
 
-  private def vulnerabilityMatchesArtifacts(alert: Vulnerability, artifacts: Seq[String]): (Seq[String], Seq[String]) = {
-    val alertMavenPath = s"pkg:maven/${alert.packageId.replace(":", "/")}@"
-    artifacts
-      .filter(_.startsWith(alertMavenPath))
-      .partition { artifact =>
-        val version = artifact.replaceAll(".*@", "")
-        versionMatchesRange(version, alert.vulnerableVersionRange)
-      }
-  }
+  private def vulnerabilityMatchesArtifacts(
+      alert: Vulnerability,
+      artifacts: Seq[String]
+    ): (Seq[String], Seq[String]) = {
+      val alertMavenPath = s"pkg:maven/${alert.packageId.replace(":", "/")}@"
+      artifacts
+        .filter(_.startsWith(alertMavenPath))
+        .partition { artifact =>
+          val version = artifact.replaceAll(".*@", "")
+          versionMatchesRange(version, alert.vulnerableVersionRange)
+        }
+    }
 
   def getGitHubRepo: Option[String] = {
     val remoteUrl = "git config --get remote.origin.url".!!.trim
@@ -211,5 +212,5 @@ object AnalyzeDependencyGraph {
     }
   }
 
-   private def githubToken(): String = Properties.envOrElse("GITHUB_TOKEN", "")
+  private def githubToken(): String = Properties.envOrElse("GITHUB_TOKEN", "")
 }
