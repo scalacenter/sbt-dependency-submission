@@ -29,7 +29,7 @@ object AnalyzeDependencyGraphDetailed {
   import Model._
   import AnalyzeDependencyGraph.getGithubManifest
 
-  val AnalyzeDependenciesDetailed = "githubAnalyzeDependenciesDetailed"
+  val AnalyzeDependenciesDetailed = "githubDetaileledAnalyzeDependencies"
   val AnalyzeDependenciesUsage: String =
     s"""$AnalyzeDependenciesDetailed [${DetailedAnalysisAction.values.map(_.name).mkString("|")}] [pattern]"""
   val AnalyzeDependenciesDetail: String = s"""Analyze the dependencies based on a search pattern:
