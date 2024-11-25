@@ -52,8 +52,8 @@ object AnalyzeDependencyGraph {
       }
     }.failOnException
 
-  private def analyzeDependencies(state: State, params: AnalysisParams): State =
-    (for {
+  private def analyzeDependencies(state: State, params: AnalysisParams): State = {
+    for {
       repo <- params.repository.orElse(getGitHubRepo)
       vulnerabilities <- downloadAlerts(state, repo) match {
         case Success(v) => Some(v)
@@ -61,9 +61,11 @@ object AnalyzeDependencyGraph {
           state.log.error(s"Failed to download alerts: ${e.getMessage}")
           None
       }
-    } yield analyzeCves(state, vulnerabilities)).getOrElse(state)
+    } yield analyzeCves(state, vulnerabilities) 
+    state
+  }
 
-  private def analyzeCves(state: State, vulnerabilities: Seq[Vulnerability]): State = {
+  private def analyzeCves(state: State, vulnerabilities: Seq[Vulnerability]): Unit = {
     val artifacts = getAllArtifacts(state)
     vulnerabilities.foreach { v =>
       val (goodMatches, badMatches) = vulnerabilityMatchesArtifacts(v, artifacts)
@@ -75,7 +77,6 @@ object AnalyzeDependencyGraph {
         println("    🎉 no match (dependency was probably removed)")
       }
     }
-    state
   }
 
   private def getStateOrWarn[T](state: State, key: AttributeKey[T], what: String, command: String): Option[T] =
