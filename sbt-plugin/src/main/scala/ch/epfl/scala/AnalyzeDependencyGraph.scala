@@ -61,7 +61,7 @@ object AnalyzeDependencyGraph {
           state.log.error(s"Failed to download alerts: ${e.getMessage}")
           None
       }
-    } yield analyzeCves(state, vulnerabilities) 
+    } yield analyzeCves(state, vulnerabilities)
     state
   }
 
