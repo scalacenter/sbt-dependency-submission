@@ -51,7 +51,7 @@ A list of space-separated names of configurations to ignore. The action will not
 
 Example of configurations are `compile`, `test`, `scala-tool`, `scala-doc-tool`.
 
-### - `correlator` (optional)
+#### - `correlator` (optional)
 
 An optional identifier to distinguish between multiple dependency snapshots of the same type.
 Defaults to the concatenation of the workflow name, the job id and the action id.
