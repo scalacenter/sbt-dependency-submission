@@ -68,7 +68,7 @@ object AnalyzeDependencyGraph {
   private def analyzeCves(state: State, vulnerabilities: Seq[Vulnerability]): Unit = {
     val artifacts = getAllArtifacts(state)
     vulnerabilities.foreach { v =>
-      val (goodMatches, badMatches) = vulnerabilityMatchesArtifacts(v, artifacts)
+      val (badMatches, goodMatches) = vulnerabilityMatchesArtifacts(v, artifacts)
       println(v.toString)
       if (goodMatches.nonEmpty || badMatches.nonEmpty) {
         goodMatches.foreach(m => println(s"    🟢 ${m.replaceAll(".*@", "")}"))
