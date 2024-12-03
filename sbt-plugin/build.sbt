@@ -39,7 +39,7 @@ val `sbt-github-dependency-submission` = project
     ),
     libraryDependencies ++= Seq(
       "com.eed3si9n" %% "gigahorse-asynchttpclient" % "0.7.0",
-      "org.scalameta" %% "munit" % "1.0.2" % Test
+      "org.scalameta" %% "munit" % "1.0.3" % Test
     ),
     buildInfoKeys := Seq[BuildInfoKey](name, version, homepage),
     buildInfoPackage := "ch.epfl.scala",
