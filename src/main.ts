@@ -13,6 +13,7 @@ async function run(): Promise<void> {
     const token = core.getInput('token')
     core.setSecret(token)
 
+    const submitGraph = core.getInput('submit-graph') === 'yes' ? true : false
     const workingDirInput = core.getInput('working-directory')
     const workingDir = workingDirInput.length === 0 ? '.' : workingDirInput
     const projectDir = path.join(workingDir, 'project')
@@ -62,10 +63,11 @@ async function run(): Promise<void> {
       process.env['GITHUB_SHA'] = payload.pull_request.head.sha
     }
 
+    const submitGraphArgument = submitGraph ? 'githubSubmitSnapshot' : ''
     process.env['GITHUB_TOKEN'] = token
     await cli.exec(
       'sbt',
-      ['--batch', `githubGenerateSnapshot ${JSON.stringify(input)}; githubSubmitSnapshot`],
+      ['--batch', `githubGenerateSnapshot ${JSON.stringify(input)}; ${submitGraphArgument}`],
       {
         cwd: workingDir,
       },
