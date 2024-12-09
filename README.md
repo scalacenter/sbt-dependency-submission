@@ -28,6 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: sbt/setup-sbt@v1
       - uses: scalacenter/sbt-dependency-submission@v2
 ```
 
