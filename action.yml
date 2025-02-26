@@ -35,6 +35,10 @@ inputs:
       If 'warning', the job will ignore the failing modules and submit the snapshot.
     required: false
     default: error
+  ref-override:
+    description: "Overrides the `ref` attribute in the generated JSON file before submission."
+    required: false
+    default: ''
   token:
     description: GitHub Personal Access Token (PAT). Defaults to PAT provided by Action runner.
     required: false

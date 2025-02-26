@@ -42,7 +42,7 @@ object SubmitDependencyGraph {
   private def inputParser(state: State): Parser[DependencySnapshotInput] =
     Parsers.any.*.map { raw =>
       val rawString = raw.mkString
-      if (rawString.isEmpty) DependencySnapshotInput(None, Vector.empty, Vector.empty, Some(""))
+      if (rawString.isEmpty) DependencySnapshotInput(None, Vector.empty, Vector.empty, Some(""), Some(""))
       else
         JsonParser
           .parseFromString(rawString)
@@ -155,11 +155,13 @@ object SubmitDependencyGraph {
     )
     val scanned = Instant.now
     val manifests = state.get(githubManifestsKey).get
+    val inputOpt = state.get(githubSnapshotInputKey)
+    val refOverrideOpt = inputOpt.flatMap(_.refOverride).filterNot(_.trim.isEmpty)
     DependencySnapshot(
       0,
       githubJob(correlator),
       githubSha(),
-      githubRef(),
+      refOverrideOpt.getOrElse(githubRef()),
       detector,
       Map.empty[String, JValue],
       manifests,
