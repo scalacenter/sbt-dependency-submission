@@ -53,6 +53,8 @@ async function run(): Promise<void> {
       ? correlatorInput
       : `${github.context.workflow}_${github.context.job}_${github.context.action}`
 
+    const shaOverride = core.getInput('sha-override')
+
     const refOverride = core.getInput('ref-override')
 
     const input = {
@@ -60,6 +62,7 @@ async function run(): Promise<void> {
       ignoredConfigs,
       onResolveFailure,
       correlator,
+      shaOverride,
       refOverride,
     }
 

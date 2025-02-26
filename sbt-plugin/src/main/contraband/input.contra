@@ -27,6 +27,9 @@ type DependencySnapshotInput {
   ## The job correlator of the snapshot
   correlator: String
 
+  ## Overrides the sha attribute in the generated JSON file before submission.
+  shaOverride: String
+
   ## Overrides the ref attribute in the generated JSON file before submission.
   refOverride: String
 }
