@@ -63,6 +63,10 @@ Typically you would specify the correlator in a matrix-based job like this:
   correlator: ${{ github.job }}-${{ matrix.directory }}
 ```
 
+#### - `sha-override` (optional)
+
+Overrides the `sha` attribute in the generated JSON file before submission.
+
 #### - `ref-override` (optional)
 
 Overrides the `ref` attribute in the generated JSON file before submission.
