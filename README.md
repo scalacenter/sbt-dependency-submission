@@ -63,6 +63,10 @@ Typically you would specify the correlator in a matrix-based job like this:
   correlator: ${{ github.job }}-${{ matrix.directory }}
 ```
 
+#### - `ref-override` (optional)
+
+Overrides the `ref` attribute in the generated JSON file before submission.
+
 #### - `token` (optional)
 
 GitHub Personal Access Token (PAT). Defaults to PAT provided by Action runner.
