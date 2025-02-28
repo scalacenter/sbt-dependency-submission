@@ -21,13 +21,22 @@ inThisBuild(
   )
 )
 
+val scala2 = "2.12.20"
+val scala3 = "3.6.3"
+
 val `sbt-github-dependency-submission` = project
   .in(file("."))
   .enablePlugins(SbtPlugin, ContrabandPlugin, JsonCodecPlugin, BuildInfoPlugin)
   .settings(
     name := "sbt-github-dependency-submission",
-    sbtVersion := "1.5.8",
-    scalaVersion := "2.12.20",
+    pluginCrossBuild / sbtVersion := {
+      scalaBinaryVersion.value match {
+        case "2.12" => "1.5.8"
+        case _ => "2.0.0-M3"
+      }
+    },
+    scalaVersion := scala2,
+    crossScalaVersions := Seq(scala2, scala3),
     scalacOptions ++= Seq(
       "-deprecation",
       "-encoding",
