@@ -32,7 +32,7 @@ val `sbt-github-dependency-submission` = project
     pluginCrossBuild / sbtVersion := {
       scalaBinaryVersion.value match {
         case "2.12" => "1.5.8"
-        case _ => "2.0.0-M3"
+        case _      => "2.0.0-M3"
       }
     },
     scalaVersion := scala2,
@@ -46,7 +46,7 @@ val `sbt-github-dependency-submission` = project
       "-Xfatal-warnings"
     ) ++ (scalaBinaryVersion.value match {
       case "2.12" => Seq("-Ywarn-unused-import")
-      case _ => Seq("-Wunused:imports")
+      case _      => Seq("-Wunused:imports")
     }),
     libraryDependencies ++= Seq(
       "com.eed3si9n" %% "gigahorse-asynchttpclient" % "0.7.0",
