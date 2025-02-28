@@ -13,7 +13,11 @@ import sbt.internal.util.complete.Parsers
 import sbt.plugins.JvmPlugin
 import sjsonnew.shaded.scalajson.ast.unsafe.JString
 
-object GithubDependencyGraphPlugin extends AutoPlugin with GithubDependencyGraphPluginCompat {
+// `import sbt.Result._` is unused in Scala 2/sbt 1 but necessary in Scala 3/sbt 2
+@annotation.nowarn("msg=Unused import")
+object GithubDependencyGraphPlugin extends AutoPlugin {
+  import sbt.Result._
+
   private val runtimeConfigs =
     Set(
       Compile,
