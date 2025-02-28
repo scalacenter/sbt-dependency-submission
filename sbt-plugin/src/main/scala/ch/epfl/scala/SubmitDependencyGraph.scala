@@ -168,7 +168,7 @@ object SubmitDependencyGraph {
   }
 
   private def githubJob(correlator: String): Job = {
-    val id = githubRunId
+    val id = githubRunId()
     val html_url =
       for {
         serverUrl <- Properties.envOrNone("GITHUB_SERVER_URL")
