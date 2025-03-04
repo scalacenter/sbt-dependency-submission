@@ -32,4 +32,8 @@ type DependencySnapshotInput {
 
   ## Overrides the ref attribute in the generated JSON file before submission.
   refOverride: String
+
+  ## Overrides the source_location attribute of each file object in the manifest entries of the JSON file before submission.
+  ## This does not affect which build.sbt file is actually processed - that can be controlled by the working-directory input.
+  manifestOverride: String
 }

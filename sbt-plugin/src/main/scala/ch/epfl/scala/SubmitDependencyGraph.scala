@@ -43,7 +43,7 @@ object SubmitDependencyGraph {
     Parsers.any.*.map { raw =>
       val rawString = raw.mkString
       if (rawString.isEmpty)
-        DependencySnapshotInput(None, Vector.empty, Vector.empty, Some(""), Some(""), Some(""))
+        DependencySnapshotInput(None, Vector.empty, Vector.empty, Some(""), Some(""), Some(""), Some(""))
       else
         JsonParser
           .parseFromString(rawString)

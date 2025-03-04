@@ -71,6 +71,11 @@ Overrides the `sha` attribute in the generated JSON file before submission.
 
 Overrides the `ref` attribute in the generated JSON file before submission.
 
+#### - `manifest-override` (optional)
+
+Overrides the `source_location` attribute of each `file` object in the manifest entries of the JSON file before submission.
+This does not affect which `build.sbt` file is actually processed - that can be controlled by the `working-directory` input.
+
 #### - `token` (optional)
 
 GitHub Personal Access Token (PAT). Defaults to PAT provided by Action runner.

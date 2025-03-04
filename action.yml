@@ -43,6 +43,12 @@ inputs:
     description: "Overrides the `ref` attribute in the generated JSON file before submission."
     required: false
     default: ''
+  manifest-override:
+    description: |
+      Overrides the `source_location` attribute of each `file` object in the manifest entries of the JSON file before submission.
+      This does not affect which `build.sbt` file is actually processed - that can be controlled by the `working-directory` input.
+    required: false
+    default: ''
   token:
     description: GitHub Personal Access Token (PAT). Defaults to PAT provided by Action runner.
     required: false

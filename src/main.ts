@@ -57,6 +57,8 @@ async function run(): Promise<void> {
 
     const refOverride = core.getInput('ref-override')
 
+    const manifestOverride = core.getInput('manifest-override')
+
     const input = {
       ignoredModules,
       ignoredConfigs,
@@ -64,6 +66,7 @@ async function run(): Promise<void> {
       correlator,
       shaOverride,
       refOverride,
+      manifestOverride,
     }
 
     if (github.context.eventName === 'pull_request') {
