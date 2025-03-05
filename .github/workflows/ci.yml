@@ -85,7 +85,7 @@ jobs:
       id: dependency-submission
       with:
         working-directory: sbt-plugin
-        sbt-plugin-version: 3.1.0-SNAPSHOT
+        sbt-plugin-version: 3.2.0-SNAPSHOT
     - name: Check outputs
       run: |
         echo ${{ steps.dependency-submission.outputs.submission-id }}
