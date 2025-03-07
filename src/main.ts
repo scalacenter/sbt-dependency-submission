@@ -53,7 +53,21 @@ async function run(): Promise<void> {
       ? correlatorInput
       : `${github.context.workflow}_${github.context.job}_${github.context.action}`
 
-    const input = { ignoredModules, ignoredConfigs, onResolveFailure, correlator }
+    const shaOverride = core.getInput('sha-override')
+
+    const refOverride = core.getInput('ref-override')
+
+    const manifestOverride = core.getInput('manifest-override')
+
+    const input = {
+      ignoredModules,
+      ignoredConfigs,
+      onResolveFailure,
+      correlator,
+      shaOverride,
+      refOverride,
+      manifestOverride,
+    }
 
     if (github.context.eventName === 'pull_request') {
       core.info('pull request, resetting sha')
