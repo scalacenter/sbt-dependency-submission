@@ -183,12 +183,11 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
             allDependencies += (getReference(caller.caller) -> moduleRef)
         }
 
-        val allDependenciesMap: Map[String, Vector[String]] = allDependencies.view
-          .groupBy(_._1)
-          .mapValues {
-            _.map { case (_, dep) => dep }.toVector
+        val allDependenciesMap: Map[String, Vector[String]] =
+          allDependencies.foldLeft(Map.empty[String, Vector[String]]) {
+            case (acc, (ref, dep)) =>
+              acc + (ref -> (acc.getOrElse(ref, Vector.empty) :+ dep))
           }
-          .toMap
         val allDirectDependenciesRefs: Set[String] = allDirectDependencies.map(getReference).toSet
 
         val resolved =
