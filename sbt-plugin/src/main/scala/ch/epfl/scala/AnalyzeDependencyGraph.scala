@@ -205,7 +205,7 @@ object AnalyzeDependencyGraph {
               firstPatchedVersion,
               securityVulnerability.collectFirst { case JField("severity", JString(sev)) => sev }.get
             )
-        }
+        }.toSeq
       case _ =>
         val message =
           s"Unexpected status ${httpResp.status} ${httpResp.statusText} with body:\n${httpResp.bodyAsString}"

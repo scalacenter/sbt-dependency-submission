@@ -13,7 +13,11 @@ import sbt.internal.util.complete.Parsers
 import sbt.plugins.JvmPlugin
 import sjsonnew.shaded.scalajson.ast.unsafe.JString
 
+// `import sbt.Result._` is unused in Scala 2/sbt 1 but necessary in Scala 3/sbt 2
+@annotation.nowarn("msg=Unused import")
 object GithubDependencyGraphPlugin extends AutoPlugin {
+  import sbt.Result._
+
   private val runtimeConfigs =
     Set(
       Compile,
@@ -46,12 +50,12 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
   override def trigger = allRequirements
   override def requires: Plugins = JvmPlugin
 
-  override def globalSettings: Seq[Setting[_]] = Def.settings(
+  override def globalSettings: Seq[Setting[?]] = Def.settings(
     githubStoreDependencyManifests := storeManifestsTask.evaluated,
     Keys.commands ++= SubmitDependencyGraph.commands ++ AnalyzeDependencyGraph.commands
   )
 
-  override def projectSettings: Seq[Setting[_]] = Def.settings(
+  override def projectSettings: Seq[Setting[?]] = Def.settings(
     githubDependencyManifest := manifestTask.value,
     githubDependencyManifest / Keys.aggregate := false
   )
@@ -179,10 +183,10 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
             allDependencies += (getReference(caller.caller) -> moduleRef)
         }
 
-        val allDependenciesMap: Map[String, Vector[String]] = allDependencies.view
-          .groupBy(_._1)
-          .mapValues {
-            _.map { case (_, dep) => dep }.toVector
+        val allDependenciesMap: Map[String, Vector[String]] =
+          allDependencies.foldLeft(Map.empty[String, Vector[String]]) {
+            case (acc, (ref, dep)) =>
+              acc + (ref -> (acc.getOrElse(ref, Vector.empty) :+ dep))
           }
         val allDirectDependenciesRefs: Set[String] = allDirectDependencies.map(getReference).toSet
 
