@@ -69,6 +69,11 @@ GitHub Personal Access Token (PAT). Defaults to PAT provided by Action runner.
 
 Example: `${{ secrets.USER_TOKEN }}`
 
+#### - `submit-graph` (optional)
+
+Submit graph to the Github submission API or only generate the dependency graph
+Defaults: yes
+
 ### Outputs
 
 #### `submission-id`
