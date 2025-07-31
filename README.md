@@ -148,9 +148,10 @@ sbt:example> githubGenerateSnapshot {"ignoredModules":["server_2.13"], "ignoredC
 ### Unexpected Status: 404
 
 This error happens when the `Dependency Graph` feature is disabled.
-You can enable it in `Settings` > `Code Security and Analysis`.
+You can enable it in `Settings` > `Advanced Security`.
 
-![image](https://user-images.githubusercontent.com/13123162/177736071-5bd63d3c-d338-4e51-a3c9-ad8d11e35508.png)
+<img width="600px" alt="Dependency Graph option" src="https://github.com/user-attachments/assets/8779b380-4781-4727-9f4d-cb51c542876d" />
+
 
 ### Unexpected Status: 403
 
