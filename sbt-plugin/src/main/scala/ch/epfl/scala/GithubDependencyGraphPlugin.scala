@@ -37,6 +37,7 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
     val githubProjectsKey: AttributeKey[Seq[ProjectRef]] = AttributeKey("githubProjectRefs")
     val githubSnapshotFileKey: AttributeKey[File] = AttributeKey("githubSnapshotFile")
 
+    @transient
     val githubDependencyManifest: TaskKey[Option[githubapi.Manifest]] = taskKey(
       "The dependency manifest of the project"
     )
