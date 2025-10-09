@@ -30,7 +30,7 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
     )
       .map(_.toConfigRef)
 
-  object autoImport {
+  object autoImport extends GithubDependencyGraphPluginKeysCompat {
     val githubSnapshotInputKey: AttributeKey[DependencySnapshotInput] = AttributeKey("githubSnapshotInput")
     val githubBuildFile: AttributeKey[githubapi.FileInfo] = AttributeKey("githubBuildFile")
     val githubManifestsKey: AttributeKey[Map[String, githubapi.Manifest]] = AttributeKey("githubDependencyManifests")
