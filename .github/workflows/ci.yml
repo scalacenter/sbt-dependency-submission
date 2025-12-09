@@ -50,7 +50,7 @@ jobs:
     - run: sbt test
     - run: sbt "scripted dependency-manifest/* generate-snapshot/*"
     - run: sbt "scripted submit-snapshot/*"
-      if: github.event_name == 'push' || github.event.pull_request.head.repo.owner.login == 'scalacenter'
+      if: matrix.os != 'windows-latest' && (github.event_name == 'push' || github.event.pull_request.head.repo.owner.login == 'scalacenter')
   
   test-action:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.owner.login == 'scalacenter'
