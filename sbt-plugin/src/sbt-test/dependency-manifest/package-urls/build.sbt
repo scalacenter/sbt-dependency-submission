@@ -33,7 +33,7 @@ lazy val p1 = project
       )
       checkDependency(manifest, "org.lwjgl:lwjgl:3.3.1")(
         expectedPackageUrl =
-          "pkg:maven/org.lwjgl/lwjgl@3.3.1?packaging=natives-linux&packaging=natives-macos&packaging=natives-windows"
+          "pkg:maven/org.lwjgl/lwjgl@3.3.1?packaging=natives-linux,natives-macos,natives-windows"
       )
     }
   )

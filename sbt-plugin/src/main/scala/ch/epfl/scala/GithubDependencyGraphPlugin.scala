@@ -213,8 +213,10 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
   private def formatPackageUrl(moduleReport: ModuleReport): String = {
     val module = moduleReport.module
     val artifacts = moduleReport.artifacts.map { case (a, _) => a }
-    val classifiers = artifacts.flatMap(_.classifier).filter(_ != "default")
-    val packaging = if (classifiers.nonEmpty) "?" + classifiers.map(c => s"packaging=$c").mkString("&") else ""
+    val classifiers = artifacts.flatMap(_.classifier).filter(_ != "default").sorted
+    // Concatenate multiple classifiers with comma separator (sorted for stable IDs)
+    // to preserve all information while avoiding duplicate qualifier keys (which violates purl and new Github API pec)
+    val packaging = if (classifiers.nonEmpty) s"?packaging=${classifiers.mkString(",")}" else ""
     s"pkg:maven/${module.organization}/${module.name}@${module.revision}$packaging"
   }
 
