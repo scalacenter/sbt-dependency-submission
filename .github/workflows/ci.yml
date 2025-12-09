@@ -26,11 +26,11 @@ jobs:
       matrix:
         include:
         - os: ubuntu-latest
-          jvm: 'adoptium:1.8.0-412'
+          jvm: '8'
         - os: windows-latest
-          jvm: 'adoptium:1.11.0.23'
+          jvm: '11'
         - os: macOS-latest
-          jvm: 'adoptium:1.17'
+          jvm: '17'
       fail-fast: false
     name: Test sbt plugin on ${{ matrix.os }} - ${{ matrix.jvm }}
     runs-on: ${{ matrix.os }}
@@ -43,10 +43,12 @@ jobs:
       GITHUB_TOKEN: ${{ github.token }}
     steps:
     - uses: actions/checkout@v3
-    - uses: coursier/setup-action@v1.3.5
+    - uses: actions/setup-java@v5
       with:
-        jvm: ${{ matrix.jvm }}
-        apps: sbt
+        distribution: 'temurin'
+        java-version: ${{ matrix.jvm }}
+        cache: 'sbt'
+    - uses: sbt/setup-sbt@v1
     - run: sbt test
     - run: sbt "scripted dependency-manifest/* generate-snapshot/*"
     - run: sbt "scripted submit-snapshot/*"
@@ -58,11 +60,11 @@ jobs:
       matrix:
         include:
         - os: ubuntu-latest
-          jvm: 'adoptium:1.11.0.23'
+          jvm: '11'
         - os: macOS-latest
-          jvm: 'adoptium:1.17'
+          jvm: '17'
         - os: windows-latest
-          jvm: 'adoptium:1.8.0-412'
+          jvm: '8'
         os: [ubuntu-latest, macOS-latest, windows-latest]
       fail-fast: false
     name: Test Github action on ${{ matrix.os }}
@@ -71,10 +73,12 @@ jobs:
       contents: write
     steps:
     - uses: actions/checkout@v3
-    - uses: coursier/setup-action@v1.3.5
+    - uses: actions/setup-java@v5
       with:
-        jvm: ${{ matrix.jvm }}
-        apps: sbt
+        distribution: 'temurin'
+        java-version: ${{ matrix.jvm }}
+        cache: 'sbt'
+    - uses: sbt/setup-sbt@v1
     - run: sbt publishLocal
       working-directory: sbt-plugin
     - run: npm version
