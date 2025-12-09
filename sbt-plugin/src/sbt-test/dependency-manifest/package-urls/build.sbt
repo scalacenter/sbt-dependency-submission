@@ -32,8 +32,7 @@ lazy val p1 = project
         expectedPackageUrl = "pkg:maven/com.google.inject/guice@4.0?packaging=no_aop"
       )
       checkDependency(manifest, "org.lwjgl:lwjgl:3.3.1")(
-        expectedPackageUrl =
-          "pkg:maven/org.lwjgl/lwjgl@3.3.1?packaging=natives-linux,natives-macos,natives-windows"
+        expectedPackageUrl = "pkg:maven/org.lwjgl/lwjgl@3.3.1?packaging=natives-linux,natives-macos,natives-windows"
       )
     }
   )
