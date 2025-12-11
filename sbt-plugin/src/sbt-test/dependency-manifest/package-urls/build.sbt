@@ -34,7 +34,7 @@ lazy val p1 = project
       checkDependency(manifest, "org.lwjgl:lwjgl:3.3.1")(
         expectedPackageUrl = sbtVersion.value match {
           case v if v.startsWith("1.") =>
-            "pkg:maven/org.lwjgl/lwjgl@3.3.1?packaging=natives-linux&packaging=natives-macos&packaging=natives-windows"
+            "pkg:maven/org.lwjgl/lwjgl@3.3.1?packaging=natives-linux,natives-macos,natives-windows"
           // Ivy support was removed in sbt 2 (https://github.com/sbt/sbt/pull/7712), so coursier is always used
           // Since coursier doesn't allow several classifiers on the same dep, the package URL only has the last one
           case v if v.startsWith("2.") =>
