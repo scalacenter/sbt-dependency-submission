@@ -58,7 +58,6 @@ val `sbt-github-dependency-submission` = project
     scriptedLaunchOpts += s"-Dplugin.version=${version.value}",
     scriptedBufferLog := false,
     Compile / generateContrabands / contrabandFormatsForType := ContrabandConfig.getFormats,
-    scriptedDependencies := {
+    scriptedDependencies :=
       publishLocal.value
-    }
   )
