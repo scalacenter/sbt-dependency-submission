@@ -51,6 +51,7 @@ jobs:
     - uses: sbt/setup-sbt@v1
     - run: sbt test
     - run: sbt "scripted dependency-manifest/* generate-snapshot/*"
+    - run: sbt ++3.7.3 "scripted dependency-manifest/* generate-snapshot/*"
     - run: sbt "scripted submit-snapshot/*"
       if: github.event_name == 'push' || github.event.pull_request.head.repo.owner.login == 'scalacenter'
   

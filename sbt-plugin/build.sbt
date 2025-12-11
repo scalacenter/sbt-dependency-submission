@@ -42,10 +42,9 @@ val `sbt-github-dependency-submission` = project
       "-encoding",
       "UTF-8",
       "-feature",
-      "-unchecked",
-      "-Xfatal-warnings"
+      "-unchecked"
     ) ++ (scalaBinaryVersion.value match {
-      case "2.12" => Seq("-Ywarn-unused-import")
+      case "2.12" => Seq("-Ywarn-unused-import", "-Xsource:3", "-Xfatal-warnings")
       case _      => Seq("-Wunused:imports")
     }),
     libraryDependencies ++= Seq(

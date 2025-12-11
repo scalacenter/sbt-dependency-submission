@@ -9,8 +9,8 @@ import scala.util.Properties
 import scala.util.Try
 
 import ch.epfl.scala.GithubDependencyGraphPlugin.autoImport._
-import ch.epfl.scala.JsonProtocol._
-import ch.epfl.scala.githubapi.JsonProtocol._
+import ch.epfl.scala.JsonProtocol.{_, given}
+import ch.epfl.scala.githubapi.JsonProtocol.{_, given}
 import ch.epfl.scala.githubapi._
 import gigahorse.FullResponse
 import gigahorse.HttpClient
