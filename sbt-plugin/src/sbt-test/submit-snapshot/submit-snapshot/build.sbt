@@ -8,7 +8,7 @@ inThisBuild(
     organization := "ch.epfl.scala",
     version := "1.2.0-SNAPSHOT",
     // use Ivy because Coursier does not allow several classifier on the same dep
-    useCoursier := false,
+    internalGithubDependencyGraphUseCoursier := false,
     scalaVersion := "2.13.8"
   )
 )

@@ -5,6 +5,7 @@ import ch.epfl.scala.DependencySnapshotInput
 import sjsonnew.shaded.scalajson.ast.unsafe.JString
 
 val checkScaladoc = taskKey[Unit]("Check scaladoc_3 is in the manifest ")
+@transient
 val ignoreScaladoc = taskKey[StateTransform]("Ignore the scala-doc-tool in the submit input")
 val checkIgnoreScaladoc = taskKey[Unit]("Check scaladoc_3 is absent in the manifest")
 

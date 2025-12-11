@@ -5,6 +5,7 @@ import ch.epfl.scala.DependencySnapshotInput
 import sjsonnew.shaded.scalajson.ast.unsafe.JString
 
 val checkTest = taskKey[Unit]("Check munit_3 is in the manifest ")
+@transient
 val ignoreTestConfig = taskKey[StateTransform]("Ignore the test config in the submit input")
 val checkIgnoreTest = taskKey[Unit]("Check scaladoc_3 is absent in the manifest")
 

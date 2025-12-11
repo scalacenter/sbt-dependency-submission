@@ -9,7 +9,7 @@ inThisBuild(
   Seq(
     organization := "ch.epfl.scala",
     version := "1.2.0-SNAPSHOT",
-    useCoursier := false, // use Ivy
+    internalGithubDependencyGraphUseCoursier := false, // use Ivy
     scalaVersion := "2.12.20"
   )
 )

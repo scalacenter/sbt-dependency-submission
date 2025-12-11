@@ -9,7 +9,7 @@ inThisBuild(
   Seq(
     organization := "ch.epfl.scala",
     version := "1.2.0-SNAPSHOT",
-    useCoursier := true,
+    internalGithubDependencyGraphUseCoursier := true,
     scalaVersion := "2.12.20"
   )
 )

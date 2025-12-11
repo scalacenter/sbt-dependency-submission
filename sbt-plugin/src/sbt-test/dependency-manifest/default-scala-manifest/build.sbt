@@ -17,17 +17,29 @@ lazy val p1 = project
   .in(file("p1"))
   .settings(
     checkManifest := {
+      val scalaBinVersion = scalaBinaryVersion.value
       val manifest = githubDependencyManifest.value.get
-      assert(manifest.name == "ch.epfl.scala:p1_2.12:1.2.0-SNAPSHOT")
+      assert(manifest.name == s"ch.epfl.scala:p1_$scalaBinVersion:1.2.0-SNAPSHOT")
 
       // all dependencies are defined
       assert(manifest.resolved.values.forall(n => n.dependencies.forall(manifest.resolved.contains)))
 
-      checkDependency(manifest, "org.scala-lang:scala-library:2.12.14")()
-      checkDependency(manifest, "org.scala-lang:scala-compiler:2.12.14")(
-        expectedScope = DependencyScope.development,
-        expectedConfig = "scala-tool"
-      )
+      scalaBinVersion match {
+        case "2.12" =>
+          checkDependency(manifest, "org.scala-lang:scala-library:2.12.14")()
+          checkDependency(manifest, "org.scala-lang:scala-compiler:2.12.14")(
+            expectedScope = DependencyScope.development,
+            expectedConfig = "scala-tool"
+          )
+        case "3" =>
+          checkDependency(manifest, "org.scala-lang:scala-library:2.13.16")(
+            expectedRelationship = DependencyRelationship.indirect
+          )
+          checkDependency(manifest, "org.scala-lang:scala3-compiler_3:3.7.3")(
+            expectedScope = DependencyScope.development,
+            expectedConfig = "scala-doc-tool"
+          )
+      }
     }
   )
 

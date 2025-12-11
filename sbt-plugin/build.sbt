@@ -21,22 +21,33 @@ inThisBuild(
   )
 )
 
+val scala2 = "2.12.20"
+val scala3 = "3.7.3"
+
 val `sbt-github-dependency-submission` = project
   .in(file("."))
   .enablePlugins(SbtPlugin, ContrabandPlugin, JsonCodecPlugin, BuildInfoPlugin)
   .settings(
     name := "sbt-github-dependency-submission",
-    sbtVersion := "1.5.8",
-    scalaVersion := "2.12.20",
+    pluginCrossBuild / sbtVersion := {
+      scalaBinaryVersion.value match {
+        case "2.12" => "1.5.8"
+        case _      => "2.0.0-RC6"
+      }
+    },
+    scalaVersion := scala2,
+    crossScalaVersions := Seq(scala2, scala3),
     scalacOptions ++= Seq(
       "-deprecation",
       "-encoding",
       "UTF-8",
       "-feature",
       "-unchecked",
-      "-Xfatal-warnings",
-      "-Ywarn-unused-import"
-    ),
+      "-Xfatal-warnings"
+    ) ++ (scalaBinaryVersion.value match {
+      case "2.12" => Seq("-Ywarn-unused-import")
+      case _      => Seq("-Wunused:imports")
+    }),
     libraryDependencies ++= Seq(
       "com.eed3si9n" %% "gigahorse-asynchttpclient" % "0.7.0",
       "org.scalameta" %% "munit" % "1.1.0" % Test

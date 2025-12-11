@@ -10,7 +10,7 @@ inThisBuild(
     organization := "ch.epfl.scala",
     version := "1.2.0-SNAPSHOT",
     // use Ivy because Coursier does not allow several classifier on the same dep
-    useCoursier := false,
+    internalGithubDependencyGraphUseCoursier := false,
     scalaVersion := "2.12.20"
   )
 )
@@ -32,7 +32,14 @@ lazy val p1 = project
         expectedPackageUrl = "pkg:maven/com.google.inject/guice@4.0?packaging=no_aop"
       )
       checkDependency(manifest, "org.lwjgl:lwjgl:3.3.1")(
-        expectedPackageUrl = "pkg:maven/org.lwjgl/lwjgl@3.3.1?packaging=natives-linux,natives-macos,natives-windows"
+        expectedPackageUrl = sbtVersion.value match {
+          case v if v.startsWith("1.") =>
+            "pkg:maven/org.lwjgl/lwjgl@3.3.1?packaging=natives-linux,natives-macos,natives-windows"
+          // Ivy support was removed in sbt 2 (https://github.com/sbt/sbt/pull/7712), so coursier is always used
+          // Since coursier doesn't allow several classifiers on the same dep, the package URL only has the last one
+          case v if v.startsWith("2.") =>
+            "pkg:maven/org.lwjgl/lwjgl@3.3.1?packaging=natives-macos"
+        }
       )
     }
   )

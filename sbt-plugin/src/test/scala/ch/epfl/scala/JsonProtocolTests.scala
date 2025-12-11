@@ -9,7 +9,7 @@ import sjsonnew.shaded.scalajson.ast.unsafe.JValue
 import sjsonnew.support.scalajson.unsafe.Converter
 import sjsonnew.support.scalajson.unsafe.Parser
 
-class JsonProtocolTests extends FunSuite {
+class JsonProtocolTests extends FunSuite with JsonProtocolTestsCompat {
   test("encode metadata") {
     import ch.epfl.scala.githubapi.JsonProtocol._
     val metadata = Map("key1" -> JString("value1"), "key2" -> JNumber(1))
