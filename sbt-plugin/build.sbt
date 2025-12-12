@@ -21,7 +21,7 @@ inThisBuild(
   )
 )
 
-val scala2 = "2.12.20"
+val scala2 = "2.12.21"
 val scala3 = "3.7.4"
 
 val `sbt-github-dependency-submission` = project
