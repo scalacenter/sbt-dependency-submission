@@ -22,7 +22,7 @@ inThisBuild(
 )
 
 val scala2 = "2.12.20"
-val scala3 = "3.7.3"
+val scala3 = "3.7.4"
 
 val `sbt-github-dependency-submission` = project
   .in(file("."))
