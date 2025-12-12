@@ -22,7 +22,7 @@ inThisBuild(
 )
 
 val scala2 = "2.12.21"
-val scala3 = "3.7.3"
+val scala3 = "3.7.4"
 
 val `sbt-github-dependency-submission` = project
   .in(file("."))
@@ -49,7 +49,7 @@ val `sbt-github-dependency-submission` = project
     }),
     libraryDependencies ++= Seq(
       "com.eed3si9n" %% "gigahorse-asynchttpclient" % "0.9.3",
-      "org.scalameta" %% "munit" % "1.1.1" % Test
+      "org.scalameta" %% "munit" % "1.2.1" % Test
     ),
     buildInfoKeys := Seq[BuildInfoKey](name, version, homepage),
     buildInfoPackage := "ch.epfl.scala",
