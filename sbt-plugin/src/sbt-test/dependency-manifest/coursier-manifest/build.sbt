@@ -10,7 +10,7 @@ inThisBuild(
     organization := "ch.epfl.scala",
     version := "1.2.0-SNAPSHOT",
     internalGithubDependencyGraphUseCoursier := true,
-    scalaVersion := "2.12.20"
+    scalaVersion := "2.12.21"
   )
 )
 
