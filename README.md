@@ -127,7 +127,7 @@ To do so you need to install the `sbt-dependency-submission` plugin in your sbt 
 
 ```scala
 // In project/plugins.sbt
-addSbtPlugin("ch.epfl.scala" % "sbt-github-dependency-submission" % "3.1.0")
+addSbtPlugin("ch.epfl.scala" % "sbt-github-dependency-submission" % "3.2.1")
 ```
 
 After reloading your build, you can run:
