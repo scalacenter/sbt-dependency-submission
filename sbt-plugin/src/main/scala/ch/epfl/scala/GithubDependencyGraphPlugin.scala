@@ -169,8 +169,21 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
         }
       case Value(report) =>
         val alreadySeen = mutable.Set[String]()
+        val evicted = mutable.Set[String]()
         val moduleReports = mutable.Buffer[(ModuleReport, ConfigRef)]()
         val allDependencies = mutable.Buffer[(String, String)]()
+
+        // First pass: collect all evicted modules
+        for {
+          configReport <- report.configurations
+          if includeConfig(configReport.configuration)
+          moduleReport <- configReport.modules
+          if moduleReport.evicted
+        } {
+          evicted += getReference(moduleReport.module)
+        }
+
+        // Second pass: process non-evicted modules and their dependencies
         for {
           configReport <- report.configurations
           if includeConfig(configReport.configuration)
@@ -180,8 +193,12 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
         } {
           alreadySeen += moduleRef
           moduleReports += (moduleReport -> configReport.configuration)
-          for (caller <- moduleReport.callers)
-            allDependencies += (getReference(caller.caller) -> moduleRef)
+          for (caller <- moduleReport.callers) {
+            val callerRef = getReference(caller.caller)
+            // Only add callers that are not evicted
+            if (!evicted.contains(callerRef))
+              allDependencies += (callerRef -> moduleRef)
+          }
         }
 
         val allDependenciesMap: Map[String, Vector[String]] =
