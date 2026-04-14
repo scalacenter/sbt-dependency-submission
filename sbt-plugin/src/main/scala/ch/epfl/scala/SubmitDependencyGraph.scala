@@ -114,7 +114,7 @@ object SubmitDependencyGraph {
         "Authorization" -> s"token ${githubToken()}"
       )
 
-    state.log.info(s"Submitting dependency snapshot of job $job to $snapshotUrl")
+    state.log.info(s"Submitting dependency snapshot of job $job to GitHub Dependency Graph API")
     val result = for {
       httpResp <- Try(Await.result(http.processFull(request), Duration.Inf))
       snapshot <- getSnapshot(httpResp)
