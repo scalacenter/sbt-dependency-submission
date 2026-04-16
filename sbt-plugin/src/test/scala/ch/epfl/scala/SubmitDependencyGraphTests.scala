@@ -1,7 +1,8 @@
 package ch.epfl.scala
 
+import ch.epfl.scala.SubmitDependencyGraph.successMessages
+import ch.epfl.scala.SubmitDependencyGraph.successOutputs
 import munit.FunSuite
-import ch.epfl.scala.SubmitDependencyGraph.{successMessages, successOutputs}
 
 class SubmitDependencyGraphTests extends FunSuite {
 
