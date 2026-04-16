@@ -127,13 +127,13 @@ object SubmitDependencyGraph {
     result.get
   }
 
-  private [scala] def successMessages(snapshotId: Long, responseBody: String): Seq[String] =
+  private[scala] def successMessages(snapshotId: Long, responseBody: String): Seq[String] =
     Seq(
       s"Submitted successfully, submission id: $snapshotId",
       s"GitHub submission response: $responseBody"
     )
 
-  private [scala] def successOutputs(snapshotUrl: String, snapshotId: Long): Seq[(String, String)] =
+  private[scala] def successOutputs(snapshotUrl: String, snapshotId: Long): Seq[(String, String)] =
     Seq(
       "submission-id" -> s"$snapshotId",
       "submission-api-url" -> s"$snapshotUrl/$snapshotId"
