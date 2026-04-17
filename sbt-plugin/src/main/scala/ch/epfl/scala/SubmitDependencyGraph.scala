@@ -114,21 +114,30 @@ object SubmitDependencyGraph {
         "Authorization" -> s"token ${githubToken()}"
       )
 
-    state.log.info(s"Submitting dependency snapshot of job $job to $snapshotUrl")
+    state.log.info(s"Submitting dependency snapshot of job $job to GitHub Dependency Graph API")
     val result = for {
       httpResp <- Try(Await.result(http.processFull(request), Duration.Inf))
       snapshot <- getSnapshot(httpResp)
     } yield {
-      state.log.info(s"Submitted successfully as $snapshotUrl/${snapshot.id}")
-      setGithubOutputs(
-        "submission-id" -> s"${snapshot.id}",
-        "submission-api-url" -> s"${snapshotUrl}/${snapshot.id}"
-      )
+      successMessages(snapshot.id, httpResp.bodyAsString).foreach(state.log.info(_))
+      setGithubOutputs(successOutputs(snapshotUrl, snapshot.id): _*)
       state
     }
 
     result.get
   }
+
+  private[scala] def successMessages(snapshotId: Long, responseBody: String): Seq[String] =
+    Seq(
+      s"Submitted successfully, submission id: $snapshotId",
+      s"GitHub submission response: $responseBody"
+    )
+
+  private[scala] def successOutputs(snapshotUrl: String, snapshotId: Long): Seq[(String, String)] =
+    Seq(
+      "submission-id" -> s"$snapshotId",
+      "submission-api-url" -> s"$snapshotUrl/$snapshotId"
+    )
 
   // https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-output-parameter
   private def setGithubOutputs(outputs: (String, String)*): Unit =
