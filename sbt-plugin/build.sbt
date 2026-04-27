@@ -48,7 +48,7 @@ val `sbt-github-dependency-submission` = project
       case _      => Seq("-Wunused:imports")
     }),
     libraryDependencies ++= Seq(
-      "com.eed3si9n" %% "gigahorse-asynchttpclient" % "0.9.3",
+      "com.eed3si9n" %% "gigahorse-asynchttpclient" % "0.9.4",
       "org.scalameta" %% "munit" % "1.3.0" % Test
     ),
     buildInfoKeys := Seq[BuildInfoKey](name, version, homepage),
