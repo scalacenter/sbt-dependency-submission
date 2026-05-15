@@ -4,10 +4,13 @@ import java.nio.file.Paths
 import java.time.Instant
 
 import scala.concurrent.Await
-import scala.concurrent.duration.Duration
+import scala.util.Failure
 import scala.util.Properties
 import scala.util.Try
 
+import ch.epfl.scala.ApiCall.ServerError
+import ch.epfl.scala.ApiCall.retryOnServerError
+import ch.epfl.scala.ApiCall.timeout
 import ch.epfl.scala.GithubDependencyGraphPlugin.autoImport._
 import ch.epfl.scala.JsonProtocol.{_, given}
 import ch.epfl.scala.githubapi.JsonProtocol.{_, given}
@@ -115,8 +118,9 @@ object SubmitDependencyGraph {
       )
 
     state.log.info(s"Submitting dependency snapshot of job $job to GitHub Dependency Graph API")
-    val result = for {
-      httpResp <- Try(Await.result(http.processFull(request), Duration.Inf))
+
+    def attempt(): Try[State] = for {
+      httpResp <- Try(Await.result(http.processFull(request), timeout))
       snapshot <- getSnapshot(httpResp)
     } yield {
       successMessages(snapshot.id, httpResp.bodyAsString).foreach(state.log.info(_))
@@ -124,7 +128,7 @@ object SubmitDependencyGraph {
       state
     }
 
-    result.get
+    retryOnServerError(state.log)(attempt()).get
   }
 
   private[scala] def successMessages(snapshotId: Long, responseBody: String): Seq[String] =
@@ -144,16 +148,18 @@ object SubmitDependencyGraph {
     for (output <- githubOutput())
       IO.writeLines(output, outputs.map { case (name, value) => s"${name}=${value}" }, append = true)
 
-  private def getSnapshot(httpResp: FullResponse): Try[SnapshotResponse] =
+  private[scala] def getSnapshot(httpResp: FullResponse): Try[SnapshotResponse] =
     httpResp.status match {
       case status if status / 100 == 2 =>
         JsonParser
           .parseFromByteBuffer(httpResp.bodyAsByteBuffer)
           .flatMap(Converter.fromJson[SnapshotResponse])
+      case status if status / 100 == 5 =>
+        Failure(ServerError(status, httpResp.statusText, httpResp.bodyAsString))
       case status =>
         val message =
           s"Unexpected status $status ${httpResp.statusText} with body:\n${httpResp.bodyAsString}"
-        throw new MessageOnlyException(message)
+        Failure(new MessageOnlyException(message))
     }
 
   private def githubDependencySnapshot(state: State, correlator: String): DependencySnapshot = {
