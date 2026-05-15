@@ -4,13 +4,15 @@ import java.nio.file.Paths
 
 import scala.Console
 import scala.concurrent.Await
-import scala.concurrent.duration.Duration
 import scala.sys.process._
 import scala.util.Failure
 import scala.util.Properties
 import scala.util.Success
 import scala.util.Try
 
+import ch.epfl.scala.ApiCall.ServerError
+import ch.epfl.scala.ApiCall.retryOnServerError
+import ch.epfl.scala.ApiCall.timeout
 import ch.epfl.scala.GithubDependencyGraphPlugin.autoImport._
 import ch.epfl.scala.githubapi._
 import gigahorse.FullResponse
@@ -86,17 +88,21 @@ object AnalyzeDependencyGraph {
     }
 
   private def downloadAlerts(state: State, repo: String): Try[Seq[Vulnerability]] = {
-    val snapshotUrl = s"https://api.github.com/repos/$repo/dependabot/alerts"
+    val alertsUrl = s"https://api.github.com/repos/$repo/dependabot/alerts"
     val request =
-      Gigahorse.url(snapshotUrl).get.addHeaders("Authorization" -> s"token ${getGithubToken()}")
-    state.log.info(s"Downloading alerts from $snapshotUrl")
-    for {
-      httpResp <- Try(Await.result(http.processFull(request), Duration.Inf))
-      vulnerabilities <- getVulnerabilities(httpResp)
-    } yield {
-      state.log.info(s"Downloaded ${vulnerabilities.size} alerts")
-      vulnerabilities
-    }
+      Gigahorse.url(alertsUrl).get.addHeaders("Authorization" -> s"token ${getGithubToken()}")
+    state.log.info(s"Downloading alerts from $alertsUrl")
+
+    def attempt(): Try[Seq[Vulnerability]] =
+      for {
+        httpResp <- Try(Await.result(http.processFull(request), timeout))
+        vulnerabilities <- getVulnerabilities(httpResp)
+      } yield {
+        state.log.info(s"Downloaded ${vulnerabilities.size} alerts")
+        vulnerabilities
+      }
+
+    retryOnServerError(state.log)(attempt())
   }
 
   case class Vulnerability(
@@ -183,35 +189,38 @@ object AnalyzeDependencyGraph {
     }
   }
 
-  private def getVulnerabilities(httpResp: FullResponse): Try[Seq[Vulnerability]] = Try {
+  private[scala] def getVulnerabilities(httpResp: FullResponse): Try[Seq[Vulnerability]] =
     httpResp.status match {
       case status if status / 100 == 2 =>
-        val json: JArray = JsonParser.parseFromByteBuffer(httpResp.bodyAsByteBuffer).get.asInstanceOf[JArray]
-        json.value.collect {
-          case obj: JObject if obj.value.collectFirst { case JField("state", JString("open")) => true }.isDefined =>
-            val securityVulnerability =
-              obj.value.collectFirst { case JField("security_vulnerability", secVuln: JObject) => secVuln }.get.value
-            val packageObj =
-              securityVulnerability.collectFirst { case JField("package", pkg: JObject) => pkg }.get.value
-            val firstPatchedVersion = securityVulnerability
-              .collectFirst { case JField("first_patched_version", firstPatched: JObject) => firstPatched }
-              .map(_.value.collectFirst { case JField("identifier", JString(ident)) => ident }.getOrElse(""))
-              .getOrElse("")
-            Vulnerability(
-              packageObj.collectFirst { case JField("name", JString(name)) => name }.get,
-              securityVulnerability.collectFirst {
-                case JField("vulnerable_version_range", JString(range)) => range
-              }.get,
-              firstPatchedVersion,
-              securityVulnerability.collectFirst { case JField("severity", JString(sev)) => sev }.get
-            )
-        }.toSeq
-      case _ =>
+        Try {
+          val json: JArray = JsonParser.parseFromByteBuffer(httpResp.bodyAsByteBuffer).get.asInstanceOf[JArray]
+          json.value.collect {
+            case obj: JObject if obj.value.collectFirst { case JField("state", JString("open")) => true }.isDefined =>
+              val securityVulnerability =
+                obj.value.collectFirst { case JField("security_vulnerability", secVuln: JObject) => secVuln }.get.value
+              val packageObj =
+                securityVulnerability.collectFirst { case JField("package", pkg: JObject) => pkg }.get.value
+              val firstPatchedVersion = securityVulnerability
+                .collectFirst { case JField("first_patched_version", firstPatched: JObject) => firstPatched }
+                .map(_.value.collectFirst { case JField("identifier", JString(ident)) => ident }.getOrElse(""))
+                .getOrElse("")
+              Vulnerability(
+                packageObj.collectFirst { case JField("name", JString(name)) => name }.get,
+                securityVulnerability.collectFirst {
+                  case JField("vulnerable_version_range", JString(range)) => range
+                }.get,
+                firstPatchedVersion,
+                securityVulnerability.collectFirst { case JField("severity", JString(sev)) => sev }.get
+              )
+          }.toSeq
+        }
+      case status if status / 100 == 5 =>
+        Failure(ServerError(status, httpResp.statusText, httpResp.bodyAsString))
+      case status =>
         val message =
-          s"Unexpected status ${httpResp.status} ${httpResp.statusText} with body:\n${httpResp.bodyAsString}"
-        throw new MessageOnlyException(message)
+          s"Unexpected status $status ${httpResp.statusText} with body:\n${httpResp.bodyAsString}"
+        Failure(new MessageOnlyException(message))
     }
-  }
 
   private def githubToken(): String = Properties.envOrElse("GITHUB_TOKEN", "")
 }
