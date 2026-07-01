@@ -32,7 +32,7 @@ val `sbt-github-dependency-submission` = project
     pluginCrossBuild / sbtVersion := {
       scalaBinaryVersion.value match {
         case "2.12" => "1.5.8"
-        case _      => "2.0.0-RC10"
+        case _      => "2.0.1"
       }
     },
     scalaVersion := scala2,

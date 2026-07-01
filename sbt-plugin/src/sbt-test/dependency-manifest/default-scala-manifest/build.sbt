@@ -32,10 +32,10 @@ lazy val p1 = project
             expectedConfig = "scala-tool"
           )
         case "3" =>
-          checkDependency(manifest, "org.scala-lang:scala-library:3.8.2")(
+          checkDependency(manifest, "org.scala-lang:scala-library:3.8.4")(
             expectedRelationship = DependencyRelationship.indirect
           )
-          checkDependency(manifest, "org.scala-lang:scala3-compiler_3:3.8.2")(
+          checkDependency(manifest, "org.scala-lang:scala3-compiler_3:3.8.4")(
             expectedScope = DependencyScope.development,
             expectedConfig = "scala-doc-tool"
           )
