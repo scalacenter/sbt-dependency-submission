@@ -13,6 +13,20 @@ inThisBuild(
   )
 )
 
+// The application and its library deliberately use different patch versions
+// for each Scala binary version. They must still be switched together before
+// resolving the application's dependency graph.
+val library = project
+  .in(file("library"))
+  .settings(
+    scalaVersion := "2.13.9",
+    crossScalaVersions := Seq(
+      "2.12.17",
+      "2.13.9",
+      "3.1.2"
+    )
+  )
+
 val a = project
   .in(file("."))
   .settings(
@@ -30,6 +44,7 @@ val a = project
         .classifier("natives-macos")
     )
   )
+  .dependsOn(library)
 
 // b is not cross-compiled
 // but we should still be able to resolve the manifests of the build on 2.12.16 and 3.1.3
