@@ -77,8 +77,16 @@ object SubmitDependencyGraph {
       .put(githubManifestsKey, Map.empty[String, Manifest])
       .put(githubProjectsKey, projectRefs)
 
-    val storeAllManifests = scalaVersions.flatMap { scalaVersion =>
-      Seq(s"++$scalaVersion", s"Global/${githubStoreDependencyManifests.key} $scalaVersion")
+    val scalaVersionsWithSelectors =
+      scalaVersions.map(scalaVersion => scalaVersion -> ScalaVersionSwitchCompat.selector(scalaVersion))
+    val storeAllManifests = scalaVersionsWithSelectors.map(_._2).distinct.flatMap { selector =>
+      val storeManifests = scalaVersionsWithSelectors
+        .filter(_._2 == selector)
+        .map {
+          case (scalaVersion, _) =>
+            s"Global/${githubStoreDependencyManifests.key} $scalaVersion"
+        }
+      s"++$selector" +: storeManifests
     }
     val commands = storeAllManifests :+ GenerateInternal
     commands.toList ::: initState
