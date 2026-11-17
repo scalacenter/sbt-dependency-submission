@@ -18,6 +18,7 @@ lazy val p1 = project
   .settings(
     checkManifest := {
       val scalaBinVersion = scalaBinaryVersion.value
+      val scalaFullVersion = scalaVersion.value
       val manifest = githubDependencyManifest.value.get
       assert(manifest.name == s"ch.epfl.scala:p1_$scalaBinVersion:1.2.0-SNAPSHOT")
 
@@ -26,16 +27,16 @@ lazy val p1 = project
 
       scalaBinVersion match {
         case "2.12" =>
-          checkDependency(manifest, "org.scala-lang:scala-library:2.12.14")()
-          checkDependency(manifest, "org.scala-lang:scala-compiler:2.12.14")(
+          checkDependency(manifest, s"org.scala-lang:scala-library:$scalaFullVersion")()
+          checkDependency(manifest, s"org.scala-lang:scala-compiler:$scalaFullVersion")(
             expectedScope = DependencyScope.development,
             expectedConfig = "scala-tool"
           )
         case "3" =>
-          checkDependency(manifest, "org.scala-lang:scala-library:3.8.4")(
+          checkDependency(manifest, s"org.scala-lang:scala-library:$scalaFullVersion")(
             expectedRelationship = DependencyRelationship.indirect
           )
-          checkDependency(manifest, "org.scala-lang:scala3-compiler_3:3.8.4")(
+          checkDependency(manifest, s"org.scala-lang:scala3-compiler_3:$scalaFullVersion")(
             expectedScope = DependencyScope.development,
             expectedConfig = "scala-doc-tool"
           )
