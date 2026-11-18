@@ -15,7 +15,7 @@ jobs:
         working-directory: sbt-plugin
     steps:
       - uses: actions/checkout@v7
-      - uses: coursier/setup-action@v1.3.5
+      - uses: coursier/setup-action@v3.1.0
         with:
           apps: scalafmt sbt
       - run: scalafmt --test
