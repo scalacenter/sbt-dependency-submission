@@ -22,7 +22,7 @@ inThisBuild(
 )
 
 val scala2 = "2.12.21"
-val scala3 = "3.10.1"
+val scala3 = "3.9.0"
 
 val `sbt-github-dependency-submission` = project
   .in(file("."))
@@ -32,7 +32,7 @@ val `sbt-github-dependency-submission` = project
     pluginCrossBuild / sbtVersion := {
       scalaBinaryVersion.value match {
         case "2.12" => "1.5.8"
-        case _      => "2.0.1"
+        case _      => "2.1.0"
       }
     },
     scalaVersion := scala2,
@@ -54,6 +54,7 @@ val `sbt-github-dependency-submission` = project
     buildInfoKeys := Seq[BuildInfoKey](name, version, homepage),
     buildInfoPackage := "ch.epfl.scala",
     buildInfoObject := "SbtGithubDependencySubmission",
+    scriptedSbt := (if (scalaBinaryVersion.value == "2.12") "1.13.1" else "2.1.0"),
     scriptedLaunchOpts += s"-Dplugin.version=${version.value}",
     scriptedBufferLog := false,
     Compile / generateContrabands / contrabandFormatsForType := ContrabandConfig.getFormats,

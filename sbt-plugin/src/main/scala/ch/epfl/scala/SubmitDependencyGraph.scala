@@ -12,8 +12,9 @@ import ch.epfl.scala.ApiCall.ServerError
 import ch.epfl.scala.ApiCall.retryOnServerError
 import ch.epfl.scala.ApiCall.timeout
 import ch.epfl.scala.GithubDependencyGraphPlugin.autoImport._
-import ch.epfl.scala.JsonProtocol.{_, given}
-import ch.epfl.scala.githubapi.JsonProtocol.{_, given}
+import ch.epfl.scala.JsonProtocol.DependencySnapshotInputFormat
+import ch.epfl.scala.githubapi.JsonProtocol.DependencySnapshotFormat
+import ch.epfl.scala.githubapi.JsonProtocol.SnapshotResponseFormat
 import ch.epfl.scala.githubapi._
 import gigahorse.FullResponse
 import gigahorse.HttpClient
@@ -124,7 +125,7 @@ object SubmitDependencyGraph {
       snapshot <- getSnapshot(httpResp)
     } yield {
       successMessages(snapshot.id, httpResp.bodyAsString).foreach(state.log.info(_))
-      setGithubOutputs(successOutputs(snapshotUrl, snapshot.id): _*)
+      setGithubOutputs(successOutputs(snapshotUrl, snapshot.id)*)
       state
     }
 
