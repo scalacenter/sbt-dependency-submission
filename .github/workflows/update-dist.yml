@@ -8,7 +8,7 @@ jobs:
   update-dist:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7
       - run: npm install
       - run: npm run all
       - name: Create Pull Request
