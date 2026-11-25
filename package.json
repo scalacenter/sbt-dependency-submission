@@ -35,7 +35,7 @@
     "@octokit/webhooks-types": "^7.6.1",
     "@types/node": "^24.0.0",
     "@vercel/ncc": "^0.45.0",
-    "eslint": "10.15.0",
+    "eslint": "8.57.1",
     "eslint-plugin-github": "5.0.0",
     "js-yaml": "^4.1.1",
     "prettier": "3.10.1",
