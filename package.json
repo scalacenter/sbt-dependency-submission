@@ -35,13 +35,13 @@
     "@octokit/webhooks-types": "^7.6.1",
     "@types/node": "^24.0.0",
     "@vercel/ncc": "^0.45.0",
-    "eslint": "8.57.1",
+    "eslint": "10.15.0",
     "eslint-plugin-github": "6.1.2",
     "js-yaml": "^5.5.0",
     "prettier": "3.10.1",
     "typescript": "^5.9.3"
   },
   "overrides": {
-    "eslint-plugin-escompat": "3.3.3"
+    "eslint-plugin-escompat": "3.11.3"
   }
 }
