@@ -114,6 +114,6 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - name: Dependency Review
-        uses: actions/dependency-review-action@v3
+        uses: actions/dependency-review-action@v5
         with:
           comment-summary-in-pr: always
