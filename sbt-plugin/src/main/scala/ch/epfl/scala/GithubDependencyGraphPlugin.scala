@@ -53,7 +53,7 @@ object GithubDependencyGraphPlugin extends AutoPlugin {
 
   override def globalSettings: Seq[Setting[?]] = Def.settings(
     githubStoreDependencyManifests := storeManifestsTask.evaluated,
-    Keys.commands ++= SubmitDependencyGraph.commands ++ AnalyzeDependencyGraph.commands
+    Keys.commands ++= SubmitDependencyGraph.commands ++ AnalyzeDependencyGraph.commands ++ AnalyzeDependencyGraphDetailed.commands
   )
 
   override def projectSettings: Seq[Setting[?]] = Def.settings(
